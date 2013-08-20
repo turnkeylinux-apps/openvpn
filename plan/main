@@ -1,5 +1,6 @@
 #include <turnkey/base>
 
 make
+ipcalc
 openvpn
 
