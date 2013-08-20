@@ -100,6 +100,14 @@ $EASY_RSA/pkitool --initca
 $EASY_RSA/pkitool --server server
 openvpn --genkey --secret $KEY_DIR/ta.key
 
+# setup crl jail with empty crl
+source $EASY_RSA/vars
+mkdir -p $KEY_DIR/crl.jail
+export KEY_OU=""
+export KEY_CN=""
+export KEY_NAME=""
+$OPENSSL ca -gencrl -config "$KEY_CONFIG" -out "$KEY_DIR/crl.jail/crl.pem"
+
 # generate server configuration
 source $EASY_RSA/vars
 cat > $SERVER_CFG <<EOF
@@ -116,6 +124,9 @@ persist-key
 persist-tun
 user nobody
 group nogroup
+
+chroot $KEY_DIR/crl.jail
+crl-verify crl.pem
 
 ca $KEY_DIR/ca.crt
 dh $KEY_DIR/dh$KEY_SIZE.pem

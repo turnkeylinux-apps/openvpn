@@ -10,3 +10,7 @@ cd /usr/share/doc/openvpn/examples/easy-rsa/2.0/
 [ -e README ] || gzip -d README.gz
 make install DESTDIR=$EASY_RSA
 
+# tweak crl scripts for crl.jail
+sed -i "s|^CRL=.*|CRL=\"crl.jail/crl.pem\"|" $EASY_RSA/list-crl
+sed -i "s|^CRL=.*|CRL=\"crl.jail/crl.pem\"|" $EASY_RSA/revoke-full
+
