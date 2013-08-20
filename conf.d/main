@@ -1,5 +1,12 @@
 #!/bin/bash -ex
 
+EASY_RSA=/etc/openvpn/easy-rsa
+
 # enable ip forwarding
 sed -i "/^#net.ipv4.ip_forward=1/ s/#//" /etc/sysctl.conf
+
+# install/copy easy-rsa
+cd /usr/share/doc/openvpn/examples/easy-rsa/2.0/
+[ -e README ] || gzip -d README.gz
+make install DESTDIR=$EASY_RSA
 
