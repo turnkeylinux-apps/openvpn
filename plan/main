@@ -2,5 +2,6 @@
 
 make
 ipcalc
+python-ipcalc
 openvpn
 
