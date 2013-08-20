@@ -1,0 +1,98 @@
+#!/bin/bash -e
+
+fatal() { echo "FATAL: $@" 1>&2; exit 1; }
+warn() { echo "WARN: $@"; }
+info() { echo "INFO: $@"; }
+
+usage() {
+cat<<EOF
+Syntax: $0 client-name client-email [private-subnet]
+Generate keys and configuration for a new client
+
+Arguments:
+
+    client-name         Unique name for client
+    client-email        Client email address
+    private-subnet      CIDR subnet behind client (optional)
+
+EOF
+exit 1
+}
+
+expand_cidr() {
+    addr=$(ipcalc -n $1 | grep Address | awk '{print $2}')
+    mask=$(ipcalc -n $1 | grep Netmask | awk '{print $2}')
+    echo "$addr $mask"
+}
+which ipcalc >/dev/null || fatal "ipcalc is not installed"
+
+if [[ "$#" < "2" ]]; then
+    usage
+fi
+
+client_name=$1
+client_email=$2
+private_subnet=$3
+
+EASY_RSA=/etc/openvpn/easy-rsa
+SERVER_CFG=/etc/openvpn/server.conf
+SERVER_CCD=/etc/openvpn/server.ccd
+
+SERVER_ADDR=$(grep PUBLIC_ADDRESS $SERVER_CFG | awk '{print $3}')
+[ "$SERVER_ADDR" ] || fatal "unable to determine PUBLIC_ADDRESS from $SERVER_CFG"
+
+source $EASY_RSA/vars
+[ -e $KEY_DIR/$client_name.ovpn ] && fatal "$KEY_DIR/$client_name.ovpn exists"
+
+KEY_CN=$client_name KEY_EMAIL=$client_email $EASY_RSA/pkitool
+
+if [ "$private_subnet" ]; then
+cat >> $SERVER_CFG <<EOF
+# subnet behind a client: $client_name
+route $(expand_cidr $private_subnet)
+
+EOF
+
+cat > $SERVER_CCD/$client_name <<EOF
+iroute $(expand_cidr $private_subnet)
+EOF
+fi
+
+cat > $KEY_DIR/$client_name.ovpn <<EOF
+remote $SERVER_ADDR 1194
+proto udp
+ns-cert-type server
+
+client
+dev tun
+resolv-retry infinite
+keepalive 10 120
+nobind
+comp-lzo
+verb 3
+
+;user nobody
+;group nogroup
+
+<ca>
+$(cat $KEY_DIR/ca.crt)
+</ca>
+
+key-direction 1
+<tls-auth>
+$(cat $KEY_DIR/ta.key)
+</tls-auth>
+
+<cert>
+$(cat $KEY_DIR/$client_name.crt)
+</cert>
+
+<key>
+$(cat $KEY_DIR/$client_name.key)
+</key>
+EOF
+
+echo
+warn "openvpn might need to be restarted for changes to take effect."
+info "generated $KEY_DIR/$client_name.ovpn"
+
