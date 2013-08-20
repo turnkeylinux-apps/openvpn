@@ -1,0 +1,13 @@
+# UNCONFIGURED INTERFACES
+# remove the above line if you edit this file
+
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+    post-up iptables-restore < /etc/iptables.up.rules
+
+auto eth1
+iface eth1 inet dhcp
+

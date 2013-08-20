@@ -1,0 +1,5 @@
+#!/bin/bash -ex
+
+# enable ip forwarding
+sed -i "/^#net.ipv4.ip_forward=1/ s/#//" /etc/sysctl.conf
+
