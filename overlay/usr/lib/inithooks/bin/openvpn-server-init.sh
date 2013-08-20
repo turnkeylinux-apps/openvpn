@@ -5,12 +5,13 @@ info() { echo "INFO [$(basename $0)]: $@"; }
 
 usage() {
 cat<<EOF
-Syntax: $0 key-email virtual-subnet
+Syntax: $0 key-email public-address virtual-subnet
 Initialize OpenVPN easy-rsa, server keys and configuration
 
 Arguments:
 
     key-email           Email address to use in server key
+    public-address      FQDN or IP address of server reachable by clients
     virtual-subnet      CIDR subnet address pool to allocate to clients
 
 Environment:
@@ -40,7 +41,8 @@ if [[ "$#" != "3" ]]; then
 fi
 
 key_email=$1
-virtual_subnet=$2
+public_address=$2
+virtual_subnet=$3
 
 [ -n "$KEY_ORG" ] || KEY_ORG="TurnKey Linux"
 [ -n "$KEY_OU" ] || KEY_OU="OpenVPN"
@@ -101,6 +103,8 @@ openvpn --genkey --secret $KEY_DIR/ta.key
 # generate server configuration
 source $EASY_RSA/vars
 cat > $SERVER_CFG <<EOF
+# PUBLIC_ADDRESS: $public_address (used by openvpn-addclient)
+
 port 1194
 proto udp
 dev tun
