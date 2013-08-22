@@ -56,6 +56,7 @@ EOF
 cat > $SERVER_CCD/$client_name <<EOF
 iroute $(expand_cidr $private_subnet)
 EOF
+warn "openvpn needs to be restarted for changes to take effect."
 fi
 
 cat > $KEY_DIR/$client_name.ovpn <<EOF
@@ -93,6 +94,5 @@ $(cat $KEY_DIR/$client_name.key)
 EOF
 
 echo
-warn "openvpn might need to be restarted for changes to take effect."
 info "generated $KEY_DIR/$client_name.ovpn"
 
