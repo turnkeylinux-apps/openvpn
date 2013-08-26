@@ -1,0 +1,5 @@
+#!/bin/bash -e
+# delete downloaded openvpn client profiles
+
+su www-data -c /var/www/openvpn/bin/delexpired
+

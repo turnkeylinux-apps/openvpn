@@ -1,0 +1,18 @@
+#!/bin/bash -e
+# delete downloaded openvpn client profiles
+
+fatal() { echo "FATAL: $@" 1>&2; exit 1; }
+
+LOG=/var/www/openvpn/logs/access.log
+PROFILES=/var/www/openvpn/htdocs/profiles
+
+[ "$(whoami)" == "www-data" ] || fatal "must be executed as www-data user"
+[ -e $LOG ] || exit 0
+
+for p in $(grep "GET /profiles/[a-z0-9]\{40\}/\(.*\).ovpn HTTP/1.[0,1]\" 200" $LOG | awk '{print $7}'); do
+    PROFILE_PATH=$PROFILES/$(basename $(dirname $p))
+    [ -e $PROFILE_PATH ] || continue
+    echo "deleting $p"
+    rm -rf $PROFILE_PATH
+done
+
