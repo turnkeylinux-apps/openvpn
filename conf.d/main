@@ -14,3 +14,8 @@ make install DESTDIR=$EASY_RSA
 sed -i "s|^CRL=.*|CRL=\"crl.jail/crl.pem\"|" $EASY_RSA/list-crl
 sed -i "s|^CRL=.*|CRL=\"crl.jail/crl.pem\"|" $EASY_RSA/revoke-full
 
+# setup webserver
+mkdir -p /var/www/openvpn/logs
+chown www-data:www-data /var/www/openvpn/logs
+lighty-disable-mod ssl
+

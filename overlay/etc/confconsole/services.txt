@@ -1,4 +1,5 @@
+OpenVPN:    server port 1194 (UDP)
+Web:        https://$ipaddr
 Web shell:  https://$ipaddr:12320
 Webmin:     https://$ipaddr:12321
-OpenVPN:    server port 1194 (UDP)
 SSH/SFTP:   root@$ipaddr (port 22)
