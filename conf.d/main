@@ -23,6 +23,6 @@ lighty-disable-mod ssl
 mkdir -p $HTDOCS/{css,images}
 cp /var/www/js/ui.* $HTDOCS/js/
 cp /var/www/css/*.css $HTDOCS/css/
-cp /var/www/images/{webmin.png,shell.png} $HTDOCS/images/
+cp /var/www/images/{webmin.png,shell.png,tab.png} $HTDOCS/images/
 rm -rf /var/www/{js,css,images}
 
