@@ -1,0 +1,19 @@
+turnkey-openvpn-13.0 (1) turnkey; urgency=low
+
+  * Initial public release of TurnKey OpenVPN.
+
+  * OpenVPN related:
+
+    - Inithook supporting server, gateway, client profiles (convenience).
+    - Custom openvpn-addclient script generating client profile (convenience).
+    - Expiring obfuscated profile download urls with QR code (convenience, security).
+    - Supports SSL/TLS certificates for auth and key exchange (security).
+    - Configured to drop privilages (security).
+    - Configured to run in chroot jail dedicated to CRL (security).
+    - Configured to use TLS-Auth HMAC verification (security).
+
+  * Note: Please refer to turnkey-core's changelog for changes common to all
+    appliances. Here we only describe changes specific to this appliance.
+
+ -- Alon Swartz <alon@turnkeylinux.org>  Wed, 28 Aug 2013 17:58:06 +0300
+
