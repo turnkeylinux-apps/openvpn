@@ -1,0 +1,306 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+  
+    "Description" : "Creates a VPC with public and private subnets, and OpenVPN NAT instance.",
+
+    "Parameters" : {
+        "VPCCidr" : {
+            "Description" : "CIDR Block for the VPC",
+            "Type" : "String",
+            "Default" : "10.0.0.0/16"
+        },
+
+        "SubnetZone" : {
+            "Description" : "Availability zone for VPC subnets",
+            "Type" : "String"
+        },
+
+        "SubnetPublicCidr" : {
+            "Description" : "CIDR Block for the VPC public subnet",
+            "Type" : "String",
+            "Default" : "10.0.0.0/24"
+        },
+
+        "SubnetPrivateCidr" : {
+            "Description" : "CIDR Block for the VPC private subnet",
+            "Type" : "String",
+            "Default" : "10.0.1.0/24"
+        },
+
+        "OpenVPNInstanceType" : {
+            "Description" : "OpenVPN instance type",
+            "Type" : "String",
+            "Default" : "m1.small"
+        },
+
+        "OpenVPNInstanceKeyPair" : {
+            "Description" : "OpenVPN instance keypair name",
+            "Type" : "String"
+        },
+
+        "OpenVPNPreseedEmail" : {
+            "Description" : "OpenVPN server key email address",
+            "Type" : "String",
+            "Default" : "admin@example.com"
+        },
+
+        "OpenVPNPreseedDomain" : {
+            "Description" : "OpenVPN server FQDN reachable by clients",
+            "Type" : "String",
+            "Default" : "vpn.example.com"
+        }
+    },
+
+    "Mappings" : {
+        "OpenVPNImageMap" : {
+            "us-east-1" : { "amd64" : "ami-1bbdf072" },
+            "us-west-1" : { "amd64" : "ami-fcdef4b9" },
+            "us-west-2" : { "amd64" : "ami-e2900cd2" },
+            "eu-west-1" : { "amd64" : "ami-5b716b2f" },
+            "sa-east-1" : { "amd64" : "ami-1f09ad02" },
+            "ap-southeast-1" : { "amd64" : "ami-0e2c675c" },
+            "ap-southeast-2" : { "amd64" : "ami-f72dbfcd" },
+            "ap-northeast-1" : { "amd64" : "ami-09a83a08" }
+        }
+    },
+
+    "Resources" : {
+        "VPC" : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : { "Ref" : "VPCCidr" }
+            }
+        },
+
+        "InternetGateway" : {
+            "Type" : "AWS::EC2::InternetGateway"
+        },
+
+        "AttachGateway" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "InternetGatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
+
+        "PublicSubnet" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "CidrBlock" : { "Ref" : "SubnetPublicCidr" },
+                "AvailabilityZone" : { "Ref" : "SubnetZone" }
+            }
+        },
+
+        "PublicRouteTable" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+
+       "PublicRoute" : {
+           "Type" : "AWS::EC2::Route",
+           "Properties" : {
+               "RouteTableId" : { "Ref" : "PublicRouteTable" },
+               "DestinationCidrBlock" : "0.0.0.0/0",
+               "GatewayId" : { "Ref" : "InternetGateway" }
+           }
+        },
+
+        "PublicSubnetRouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "PublicRouteTable" },
+                "SubnetId" : { "Ref" : "PublicSubnet" }
+            }
+        },
+
+        "OpenVPNSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "GroupDescription" : { 
+                    "Fn::Join" : [ 
+                        "-", [ "turnkey", "openvpn", { "Ref": "PublicSubnet" } ]
+                    ] 
+                },
+                "SecurityGroupIngress" : [
+                    { 
+                        "IpProtocol" : "-1",
+                        "CidrIp" : { "Ref" : "VPCCidr" }
+                    },
+                    { 
+                        "IpProtocol" : "icmp",
+                        "FromPort" : "-1",
+                        "ToPort" : "-1",
+                        "CidrIp" : "0.0.0.0/0"
+                    },
+                    { 
+                        "IpProtocol" : "udp",
+                        "FromPort" : "1194",
+                        "ToPort" : "1194",
+                        "CidrIp" : "0.0.0.0/0"
+                    },
+                    { 
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "22",
+                        "ToPort" : "22",
+                        "CidrIp" : "0.0.0.0/0"
+                    },
+                    { 
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "80",
+                        "ToPort" : "80",
+                        "CidrIp" : "0.0.0.0/0"
+                    },
+                    { 
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "443",
+                        "ToPort" : "443",
+                        "CidrIp" : "0.0.0.0/0"
+                    },
+                    { 
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "12320",
+                        "ToPort" : "12320",
+                        "CidrIp" : "0.0.0.0/0"
+                    },
+                    { 
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "12321",
+                        "ToPort" : "12321",
+                        "CidrIp" : "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+
+        "OpenVPNInstance" : {
+            "Type" : "AWS::EC2::Instance",
+            "Properties" : {
+                "AvailabilityZone" : { "Ref" : "SubnetZone" },
+                "InstanceType" : { "Ref" : "OpenVPNInstanceType" },
+                "KeyName" : { "Ref" : "OpenVPNInstanceKeyPair" },
+                "SecurityGroupIds" : [ { "Ref" : "OpenVPNSecurityGroup" } ],
+                "SubnetId" : { "Ref" : "PublicSubnet" },
+                "SourceDestCheck" : false,
+                "ImageId" : { 
+                    "Fn::FindInMap" : [ 
+                        "OpenVPNImageMap", { "Ref" : "AWS::Region" }, "amd64"
+                    ]
+                },
+                "UserData" : {
+                    "Fn::Base64" : { 
+                        "Fn::Join" : [ "", [
+                            "#!/bin/bash -e\n",
+                            "RANDOM_PASS=$(mcookie | cut --bytes 1-8)\n",
+                            "cat>/etc/inithooks.conf<<EOF\n",
+                            "export ROOT_PASS=$RANDOM_PASS\n",
+                            "export HUB_APIKEY=SKIP\n",
+                            "export SEC_UPDATES=FORCE\n",
+                            "export APP_PROFILE=server\n",
+                            "export APP_EMAIL=", 
+                            { "Ref" : "OpenVPNPreseedEmail" },
+                            "\nexport APP_DOMAIN=", 
+                            { "Ref" : "OpenVPNPreseedDomain" },
+                            "\nexport APP_PRIVATE_SUBNET=", 
+                            { "Ref" : "SubnetPrivateCidr" },
+                            "\nexport APP_VIRTUAL_SUBNET=AUTO\n",
+                            "EOF\n"
+                        ] ]
+                    }
+                }
+            }
+        },
+
+        "OpenVPNInstanceElasticIP" : {
+            "Type" : "AWS::EC2::EIP",
+            "Properties" : {
+                "InstanceId" : { "Ref": "OpenVPNInstance" },
+                "Domain" : "vpc"
+            }
+        },
+
+        "OpenVPNInstanceElasticIPAssociation" : {
+            "Type": "AWS::EC2::EIPAssociation",
+            "Properties": {
+                "InstanceId": { "Ref" : "OpenVPNInstance" },
+                "AllocationId": {
+                    "Fn::GetAtt" : [ 
+                        "OpenVPNInstanceElasticIP",
+                        "AllocationId" 
+                    ]
+                }
+            }
+        },
+
+        "PrivateSubnet" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "CidrBlock" : { "Ref" : "SubnetPrivateCidr" },
+                "AvailabilityZone" : { "Ref" : "SubnetZone" }
+            }
+        },
+
+        "PrivateRouteTable" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+
+       "PrivateRoute" : {
+           "Type" : "AWS::EC2::Route",
+           "Properties" : {
+               "RouteTableId" : { "Ref" : "PrivateRouteTable" },
+               "DestinationCidrBlock" : "0.0.0.0/0",
+               "InstanceId" : { "Ref" : "OpenVPNInstance" }
+           }
+        },
+
+        "PrivateSubnetRouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "PrivateRouteTable" },
+                "SubnetId" : { "Ref" : "PrivateSubnet" }
+            }
+        },
+
+        "PrivateSubnetInstancesSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "GroupDescription" : { 
+                    "Fn::Join" : [ 
+                        "-", [ "private", "instances", { "Ref": "PrivateSubnet" } ]
+                    ] 
+                },
+                "SecurityGroupIngress" : [
+                    { 
+                        "IpProtocol" : "-1",
+                        "CidrIp" : { "Ref" : "VPCCidr" }
+                    }
+                ]
+            }
+        }
+    },
+
+    "Outputs" : {
+        "OpenVPNInstanceElasticIP" : {
+            "Description" : "Public IP address to assign to OpenVPN server FQDN",
+            "Value" : { "Ref" : "OpenVPNInstanceElasticIP" }
+        },
+        "PrivateSubnetInstancesSecurityGroup" : {
+            "Description" : "Use when launching instances in private subnet",
+            "Value": { "Ref" : "PrivateSubnetInstancesSecurityGroup" }
+        },
+        "Documentation" : {
+            "Description" : "Reference documentation",
+            "Value": "http://www.turnkeylinux.org/openvpn"
+        }
+    }
+
+}
