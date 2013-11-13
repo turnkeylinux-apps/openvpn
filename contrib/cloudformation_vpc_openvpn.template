@@ -53,14 +53,14 @@
 
     "Mappings" : {
         "OpenVPNImageMap" : {
-            "us-east-1" : { "amd64" : "ami-1bbdf072" },
-            "us-west-1" : { "amd64" : "ami-fcdef4b9" },
-            "us-west-2" : { "amd64" : "ami-e2900cd2" },
-            "eu-west-1" : { "amd64" : "ami-5b716b2f" },
-            "sa-east-1" : { "amd64" : "ami-1f09ad02" },
-            "ap-southeast-1" : { "amd64" : "ami-0e2c675c" },
-            "ap-southeast-2" : { "amd64" : "ami-f72dbfcd" },
-            "ap-northeast-1" : { "amd64" : "ami-09a83a08" }
+            "us-east-1" : { "amd64" : "ami-375b095e" },
+            "us-west-1" : { "amd64" : "ami-d2497e97" },
+            "us-west-2" : { "amd64" : "ami-7e950c4e" },
+            "eu-west-1" : { "amd64" : "ami-04618073" },
+            "sa-east-1" : { "amd64" : "ami-01f2541c" },
+            "ap-southeast-1" : { "amd64" : "ami-28bdf77a" },
+            "ap-southeast-2" : { "amd64" : "ami-a5ff639f" },
+            "ap-northeast-1" : { "amd64" : "ami-c56bf3c4" }
         }
     },
 
