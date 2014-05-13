@@ -22,7 +22,7 @@ Environment:
     KEY_COUNTRY         Default: US
     KEY_PROVINCE        Default: CA
     KEY_CITY            Default: San Francisco
-    KEY_SIZE            Default: 1024
+    KEY_SIZE            Default: 2048
     KEY_EXPIRE          Default: 3650
     CA_EXPIRE           Default: 3650
 EOF
@@ -50,7 +50,7 @@ virtual_subnet=$3
 [ -n "$KEY_COUNTRY" ] || KEY_COUNTRY="US"
 [ -n "$KEY_PROVINCE" ] || KEY_PROVINCE="CA"
 [ -n "$KEY_CITY" ] || KEY_CITY="San Francisco"
-[ -n "$KEY_SIZE" ] || KEY_SIZE="1024"
+[ -n "$KEY_SIZE" ] || KEY_SIZE="2048"
 [ -n "$KEY_EXPIRE" ] || KEY_EXPIRE="3650"
 [ -n "$CA_EXPIRE" ] || CA_EXPIRE="3650"
 
