@@ -136,7 +136,8 @@ def main():
     if private_subnet:
         fh = open("/etc/openvpn/server.conf", "a")
         fh.write("# push routes to clients to allow them to reach private subnets\n")
-        fh.write("push \"route %s\"\n" % expand_cidr(private_subnet))
+        for _private_subnet in private_subnet.split(',') :
+            fh.write("push \"route %s\"\n" % expand_cidr(_private_subnet))
         fh.close()
 
 if __name__ == "__main__":
