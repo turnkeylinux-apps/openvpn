@@ -10,6 +10,7 @@ sed -i "/^#net.ipv4.ip_forward=1/ s/#//" /etc/sysctl.conf
 # install/copy easy-rsa
 mkdir -p $EASY_RSA
 mv $SRC/easy-rsa/easy-rsa/2.0/* $EASY_RSA/
+rm -rf $SRC/*
 
 # tweak crl scripts for crl.jail
 sed -i "s|^CRL=.*|CRL=\"crl.jail/crl.pem\"|" $EASY_RSA/list-crl
