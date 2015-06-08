@@ -1,0 +1,6 @@
+#!/bin/bash -ex
+
+SRC=/usr/local/scr
+
+git clone -b release/2.x --depth 1 git@github.com:OpenVPN/easy-rsa.git
+
