@@ -1,5 +1,18 @@
 turnkey-openvpn-13.0 (1) turnkey; urgency=low
 
+  * Updated all Debian components to Jessie version.
+
+  * Easy-RSA installed from upstream:
+
+    - No longer bundled with openVPN
+
+  * Note: Please refer to turnkey-core's changelog for changes common to all
+    appliances. Here we only describe changes specific to this appliance.
+
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Mon, 08 Jun 2015 19:32:46 +1000
+
+turnkey-openvpn-13.0 (1) turnkey; urgency=low
+
   * Initial public release of TurnKey OpenVPN.
 
   * OpenVPN related:
