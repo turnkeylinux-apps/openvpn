@@ -1,6 +1,6 @@
-turnkey-openvpn-13.0 (1) turnkey; urgency=low
+turnkey-openvpn-14.0 (1) turnkey; urgency=low
 
-  * Updated all Debian components to Jessie version.
+  * Latest Debian Jessie package version of OpenVPN and other components.
 
   * Easy-RSA installed from upstream:
 
