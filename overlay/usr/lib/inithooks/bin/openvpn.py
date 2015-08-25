@@ -24,6 +24,7 @@ Note: options not specified but required by profile will be asked interactively
 import os
 import sys
 import getopt
+import inithooks_cache
 from random import randint as r
 
 import ipcalc
@@ -97,6 +98,8 @@ def main():
             "OpenVPN Email",
             "Enter email address for the OpenVPN server key.",
             "admin@example.com")
+
+    inithooks_cache.write('APP_EMAIL', key_email)
 
     if not public_address:
         public_address = dialog.get_input(
