@@ -82,6 +82,7 @@ export KEY_COUNTRY="$KEY_COUNTRY"
 export KEY_PROVINCE="$KEY_PROVINCE"
 export KEY_CITY="$KEY_CITY"
 export KEY_CN="must-be-unique"
+export KEY_ALTNAMES="DNS:must-be-unique"
 EOF
 
 # cleanup any prior configurations and initialize
@@ -107,6 +108,11 @@ export KEY_OU=""
 export KEY_CN=""
 export KEY_NAME=""
 $OPENSSL ca -gencrl -config "$KEY_CONFIG" -out "$KEY_DIR/crl.jail/crl.pem"
+
+mkdir -p $KEY_DIR/crl.jail/etc/openvpn
+mkdir -p $KEY_DIR/crl.jail/tmp
+
+cp -r $SERVER_CCD $KEY_DIR/crl.jail/etc/openvpn/
 
 # generate server configuration
 source $EASY_RSA/vars
