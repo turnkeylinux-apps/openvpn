@@ -4,5 +4,6 @@ make
 ipcalc
 python-ipcalc
 openvpn
+easy-rsa
 lighttpd
 
