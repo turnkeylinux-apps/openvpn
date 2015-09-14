@@ -44,6 +44,6 @@ Credentials *(passwords set at first boot)*
 -  Webmin, SSH: username **root**
 
 .. _OpenVPN: http://openvpn.net
-.. _TurnKey Core: http://www.turnkeylinux.org/core
+.. _TurnKey Core: https://www.turnkeylinux.org/core
 .. _Usage documentation: https://github.com/turnkeylinux-apps/openvpn/tree/master/docs
 
