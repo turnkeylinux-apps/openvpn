@@ -299,7 +299,7 @@
         },
         "Documentation" : {
             "Description" : "Reference documentation",
-            "Value": "http://www.turnkeylinux.org/openvpn"
+            "Value": "https://www.turnkeylinux.org/openvpn"
         }
     }
 
