@@ -1,3 +1,12 @@
+turnkey-openvpn-14.1 (1) turnkey; urgency=low
+
+  * Fix LigHTTPd bug in 15regen-sllcert (#512).
+
+  * Note: Please refer to turnkey-core's changelog for changes common to all
+    appliances. Here we only describe changes specific to this appliance.
+
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Thu, 18 Feb 2016 15:19:03 +1100
+
 turnkey-openvpn-14.0 (1) turnkey; urgency=low
 
   * Latest Debian Jessie package version of OpenVPN and other components.
