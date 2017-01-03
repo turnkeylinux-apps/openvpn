@@ -44,7 +44,7 @@ SERVER_ADDR=$(grep PUBLIC_ADDRESS $SERVER_CFG | awk '{print $3}')
 source $EASY_RSA/vars
 [ -e $KEY_DIR/$client_name.ovpn ] && fatal "$KEY_DIR/$client_name.ovpn exists"
 
-KEY_CN=$client_name KEY_EMAIL=$client_email $EASY_RSA/pkitool
+KEY_CN=$client_name KEY_EMAIL=$client_email $EASY_RSA/pkitool --pass
 
 if [ "$private_subnet" ]; then
 cat >> $SERVER_CFG <<EOF
