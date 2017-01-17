@@ -6,7 +6,7 @@ info() { echo "INFO: $@"; }
 
 usage() {
 cat<<EOF
-Syntax: $0 client-name client-email [private-subnet]
+Syntax: $0 client-name client-email [private-subnet] [--pass]
 Generate keys and configuration for a new client
 
 Arguments:
@@ -14,6 +14,7 @@ Arguments:
     client-name         Unique name for client
     client-email        Client email address
     private-subnet      CIDR subnet behind client (optional)
+    --pass		Protect client keys with a password
 
 EOF
 exit 1
@@ -32,7 +33,14 @@ fi
 
 client_name=$1
 client_email=$2
-private_subnet=$3
+if [[ $3 == "--pass" ]]; then
+	password='--pass'
+	private_subnet=$4
+else
+	[[ $4 == "--pass" ]] && password='--pass'
+	private_subnet=$3
+fi
+
 
 EASY_RSA=/etc/openvpn/easy-rsa
 SERVER_CFG=/etc/openvpn/server.conf
@@ -44,7 +52,7 @@ SERVER_ADDR=$(grep PUBLIC_ADDRESS $SERVER_CFG | awk '{print $3}')
 source $EASY_RSA/vars
 [ -e $KEY_DIR/$client_name.ovpn ] && fatal "$KEY_DIR/$client_name.ovpn exists"
 
-KEY_CN=$client_name KEY_EMAIL=$client_email $EASY_RSA/pkitool
+KEY_CN=$client_name KEY_EMAIL=$client_email $EASY_RSA/pkitool $password
 
 if [ "$private_subnet" ]; then
 cat >> $SERVER_CFG <<EOF
