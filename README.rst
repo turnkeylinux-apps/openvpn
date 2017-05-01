@@ -39,7 +39,7 @@ See the `Usage documentation`_ for further details, including Amazon VPC
 notes and cloudformation template.
 
 Note: OpenVPN is a registered trademark of OpenVPN Technologies, Inc.
-This software appliance is not support by OpenVPN Technologies, Inc.
+This software appliance is not supported by OpenVPN Technologies, Inc.
 
 Credentials *(passwords set at first boot)*
 -------------------------------------------
