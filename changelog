@@ -1,3 +1,27 @@
+turnkey-openvpn-14.2 (1) turnkey; urgency=low
+
+  * Support encrypted private key (optional).
+
+    - Thanks to @JelteF (Jelte Fennema on GitHub) for initial PR.
+
+  * Fix addclient private subnet problem [#772].
+
+    - Thanks to @swamilad (on GitHub) for reporting issue & posting workaround.
+
+  * Fix OpenVPN trademark compliance (updated readme & logo) [#774].
+
+  * Fix /etc/cron.hourly/openvpn-profiles-delexpired cronjob [#800].
+
+    - Thanks to @ainkinen (Antti-Jussi Inkinen on GitHub) for reporting issue &
+      providing PR.
+
+  * Installed security updates.
+
+  * Note: Please refer to turnkey-core's changelog for changes common to all
+    appliances. Here we only describe changes specific to this appliance.
+
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Wed, 03 May 2017 10:50:18 +1000
+
 turnkey-openvpn-14.1 (1) turnkey; urgency=low
 
   * Fix LigHTTPd bug in 15regen-sllcert (#512).
