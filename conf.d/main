@@ -28,6 +28,3 @@ rm -rf /var/www/{js,css,images}
 
 # fix pkitool bug
 sed -i 's|\(KEY_ALTNAMES=\)"$KEY_CN"|\1"DNS:$KEY_CN"|' /etc/openvpn/easy-rsa/pkitool
-
-# fix addclient private subnet bug [#772]
-ln -s /etc/openvpn/easy-rsa/keys/crl.jail/etc/openvpn/server.ccd /etc/openvpn/server.ccd
