@@ -112,7 +112,8 @@ $OPENSSL ca -gencrl -config "$KEY_CONFIG" -out "$KEY_DIR/crl.jail/crl.pem"
 mkdir -p $KEY_DIR/crl.jail/etc/openvpn
 mkdir -p $KEY_DIR/crl.jail/tmp
 
-cp -r $SERVER_CCD $KEY_DIR/crl.jail/etc/openvpn/
+mv $SERVER_CCD $KEY_DIR/crl.jail/etc/openvpn/
+ln -sf $KEY_DIR/crl.jail/etc/openvpn $SERVER_CCD
 
 # generate server configuration
 source $EASY_RSA/vars
