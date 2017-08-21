@@ -1,5 +1,5 @@
 OpenVPN™ - Open Source VPN solution
-==================================
+===================================
 
 `OpenVPN™`_ is a full-featured open source SSL VPN solution that
 accommodates a wide range of configurations, including remote access,
