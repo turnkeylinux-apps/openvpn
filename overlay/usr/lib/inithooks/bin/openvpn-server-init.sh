@@ -60,6 +60,9 @@ SERVER_CCD=/etc/openvpn/server.ccd
 SERVER_LOG=/var/log/openvpn/server.log
 SERVER_IPP=/var/lib/openvpn/server.ipp
 
+# remove any files from a previous run to ensure inithook is idempotent
+rm -fr "$EASY_RSA/keys/"* "$SERVER_CFG" "$SERVER_CCD"
+
 # generate easy-rsa vars file
 cat > $EASY_RSA/vars <<EOF
 export EASY_RSA="$EASY_RSA"
