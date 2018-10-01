@@ -142,6 +142,7 @@ def main():
         for _private_subnet in private_subnet.split(',') :
             fh.write("push \"route %s\"\n" % expand_cidr(_private_subnet))
         fh.close()
+    system('systemctl', 'start', 'openvpn@server')
 
 if __name__ == "__main__":
     main()

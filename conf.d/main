@@ -28,3 +28,9 @@ rm -rf /var/www/{js,css,images}
 
 # fix pkitool bug
 sed -i 's|\(KEY_ALTNAMES=\)"$KEY_CN"|\1"DNS:$KEY_CN"|' /etc/openvpn/easy-rsa/pkitool
+
+# temporary fix to https://github.com/turnkeylinux/tracker/issues/1200
+ln -s /etc/openvpn/easy-rsa/openssl-1.0.0.cnf /etc/openvpn/easy-rsa/openssl.cnf
+
+# enable default vpnserver config on boot
+systemctl enable openvpn@server

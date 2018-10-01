@@ -50,6 +50,7 @@ SERVER_ADDR=$(grep PUBLIC_ADDRESS $SERVER_CFG | awk '{print $3}')
 [ "$SERVER_ADDR" ] || fatal "unable to determine PUBLIC_ADDRESS from $SERVER_CFG"
 
 source $EASY_RSA/vars
+[ -d $KEY_DIR ] || mkdir "$KEY_DIR"
 [ -e $KEY_DIR/$client_name.ovpn ] && fatal "$KEY_DIR/$client_name.ovpn exists"
 
 KEY_CN=$client_name KEY_EMAIL=$client_email $EASY_RSA/pkitool $password
