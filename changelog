@@ -1,5 +1,16 @@
 turnkey-openvpn-15.0 (1) turnkey; urgency=low
 
+  * Latest Debian Stretch package version of OpenVPN and other components.
+
+  * Workaround EasyRSA bug  by providing symlink - see further discussion:
+    https://github.com/turnkeylinux-apps/openvpn/pull/22#discussion_r221468138
+    - closes #1200.
+    [ Stefan Davis & Anton Pyrogovskyi ]
+
+  * Create /dev/net/tun device when running within a container - via addition
+    of openvpn-tun.service - closes #1011.
+    [ Anton Pyrogovskyi & Jeremy Davis ]
+
   * Note: Please refer to turnkey-core's changelog for changes common to all
     appliances. Here we only describe changes specific to this appliance.
 
