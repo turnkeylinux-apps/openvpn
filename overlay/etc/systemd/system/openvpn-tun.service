@@ -1,0 +1,20 @@
+[Unit]
+Description=Create /dev/net/tun special device for mod_tun/OpenVPN
+Documentation=https://turnkeylinux.org/openvpn https://github.com/turnkeylinux/tracker/issues/1011
+DefaultDependencies=no
+ConditionPathExists=!/dev/net/tun
+ConditionVirtualization=container
+
+Before=network-pre.target
+Wants=network-pre.target local-fs.target
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/mkdir -p /dev/net
+ExecStart=/bin/mknod /dev/net/tun c 10 200
+ExecStartPost=/bin/chmod 666 /dev/net/tun
+
+[Install]
+WantedBy=multi-user.target

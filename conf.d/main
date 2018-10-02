@@ -34,3 +34,6 @@ ln -s /etc/openvpn/easy-rsa/openssl-1.0.0.cnf /etc/openvpn/easy-rsa/openssl.cnf
 
 # enable default vpnserver config on boot
 systemctl enable openvpn@server
+
+# enable openvpn-tun service (creates /dev/net/tun device in containers - closes #1011)
+systemctl enable openvpn-tun.service
