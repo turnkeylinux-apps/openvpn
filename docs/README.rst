@@ -24,12 +24,28 @@ Additionally, expiring obfuscated HTTPS links can be created for clients
 to download their profiles (especially useful with mobile devices using
 a QR code scanner).
 
+Potential issues caused by timezone mismatch
+--------------------------------------------
+
+Some VPN client applications expect certificate timestamps to be in local
+time. However, by default, TurnKey servers use UTC time.
+
+That can lead to the creation of certificates, which according to local
+time, are not yet valid. Under these circumstance, connection will fail.
+
+To avoid that, please set the timezone for your TurnKey OpenVPN server
+prior to further configuration. To do that via the commandline::
+
+    dpkg-reconfigure tzdata
+
+For further info re setting timezone, please see this_ TurnKey Blog post.
+
 Documentation
 -------------
 
-* `Site to Site`_ (office to Amazon VPC)
+* `Site to Site`_ (office to Amazon VPC - covers both server and client)
 * `Gateway`_ (secure internet access)
 
 .. _Site to Site: site-to-site.rst
 .. _Gateway: gateway.rst
-
+.. _this: https://www.turnkeylinux.org/blog/configuring-timezone

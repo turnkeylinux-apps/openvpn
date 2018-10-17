@@ -38,8 +38,24 @@ and on top of that:
 See the `Usage documentation`_ for further details, including Amazon VPC
 notes and cloudformation template.
 
-Note: OpenVPN™ is a registered trademark of OpenVPN™ Technologies, Inc.
-This software appliance is not support by OpenVPN™ Technologies, Inc.
+**Note**: OpenVPN™ is a registered trademark of OpenVPN™ Technologies, Inc.
+This software appliance is not supported by OpenVPN™ Technologies, Inc.
+
+Potential issues caused by timezone mismatch
+--------------------------------------------
+
+Some VPN client applications expect certificate timestamps to be in local
+time. However, by default, TurnKey servers use UTC time.
+
+That can lead to the creation of certificates, which according to local
+time, are not yet valid. Under these circumstance, connection will fail.
+
+To avoid that, please set the timezone for your TurnKey OpenVPN server
+prior to further configuration. To do that via the commandline::
+
+    dpkg-reconfigure tzdata
+
+For further info re setting timezone, please see this_ TurnKey Blog post.
 
 Credentials *(passwords set at first boot)*
 -------------------------------------------
@@ -49,4 +65,4 @@ Credentials *(passwords set at first boot)*
 .. _OpenVPN™: http://openvpn.net
 .. _TurnKey Core: https://www.turnkeylinux.org/core
 .. _Usage documentation: https://github.com/turnkeylinux-apps/openvpn/tree/master/docs
-
+.. _this: https://www.turnkeylinux.org/blog/configuring-timezone
