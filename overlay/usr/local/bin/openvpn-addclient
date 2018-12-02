@@ -71,7 +71,8 @@ fi
 cat > $KEY_DIR/$client_name.ovpn <<EOF
 remote $SERVER_ADDR 1194
 proto udp
-ns-cert-type server
+remote-cert-tls server
+auth-nocache
 
 client
 dev tun
