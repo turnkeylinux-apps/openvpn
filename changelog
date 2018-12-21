@@ -1,7 +1,11 @@
 turnkey-openvpn-15.1 (1) turnkey; urgency=low
 
-  * Update OpenVPN profiles to current standards - closes #1264.
+  * Update openvpn-addclient script to current standards, include
+    'remote-cert-tls server' & 'auth-nocache' - closes #1264.
     [ https://github.com/AlejandroBOFH ]
+
+  * Refacter openvpn-addclient script to accept '--no-authcache' as an
+    optional argument so 'auth-nocache' is optional rather than being forced.
 
  -- Jeremy Davis <jeremy@turnkeylinux.org>  Thu, 20 Dec 2018 17:31:39 +1100
 

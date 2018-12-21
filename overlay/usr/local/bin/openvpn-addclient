@@ -6,7 +6,7 @@ info() { echo "INFO: $@"; }
 
 usage() {
 cat<<EOF
-Syntax: $0 client-name client-email [private-subnet] [--pass]
+Syntax: $0 client-name client-email [private-subnet] [--pass] [--auth-nocache]
 Generate keys and configuration for a new client
 
 Arguments:
@@ -14,7 +14,13 @@ Arguments:
     client-name         Unique name for client
     client-email        Client email address
     private-subnet      CIDR subnet behind client (optional)
-    --pass		Protect client keys with a password
+
+    --pass              Protect client keys with a password
+
+    --auth-nocache      This will force OpenVPN to immediately forget username/password
+                        inputs after they are used. As a result, when OpenVPN needs a
+                        username/password, it will prompt for input, which may be
+                        multiple times during the duration of an OpenVPN session.
 
 EOF
 exit 1
@@ -27,20 +33,32 @@ expand_cidr() {
 }
 which ipcalc >/dev/null || fatal "ipcalc is not installed"
 
-if [[ "$#" < "2" ]]; then
+if [[ "$#" < "2" ]] || [[ "$#" > "5" ]]; then
     usage
 fi
 
 client_name=$1
 client_email=$2
-if [[ $3 == "--pass" ]]; then
-	password='--pass'
-	private_subnet=$4
-else
-	[[ $4 == "--pass" ]] && password='--pass'
-	private_subnet=$3
-fi
+shift; shift # remove processed arguments
 
+unset password auth_nocache private_subnet
+for item in "$@"; do
+    case $item in
+        --pass)
+            password='--pass'
+            shift;;
+        --auth-nocache)
+            auth_nocache="auth-nocache"
+            shift;;
+        *)
+            if [[ -z "$private_subnet" ]]; then
+                private_subnet=$1
+            else
+                usage
+            fi
+            shift;;
+    esac
+done
 
 EASY_RSA=/etc/openvpn/easy-rsa
 SERVER_CFG=/etc/openvpn/server.conf
@@ -72,7 +90,7 @@ cat > $KEY_DIR/$client_name.ovpn <<EOF
 remote $SERVER_ADDR 1194
 proto udp
 remote-cert-tls server
-auth-nocache
+$auth_nocache
 
 client
 dev tun
