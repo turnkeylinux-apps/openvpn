@@ -1,5 +1,7 @@
 turnkey-openvpn-15.1 (1) turnkey; urgency=low
 
+  * extend default_crl_days to 1095 (i.e. CRL expiry = 3 years) - closes #1291
+
   * Update openvpn-addclient script to current standards, include
     'remote-cert-tls server' & 'auth-nocache' - closes #1264.
     [ https://github.com/AlejandroBOFH ]
@@ -7,7 +9,7 @@ turnkey-openvpn-15.1 (1) turnkey; urgency=low
   * Refacter openvpn-addclient script to accept '--no-authcache' as an
     optional argument so 'auth-nocache' is optional rather than being forced.
 
- -- Jeremy Davis <jeremy@turnkeylinux.org>  Thu, 20 Dec 2018 17:31:39 +1100
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Thu, 07 Feb 2019 15:32:15 +1100
 
 turnkey-openvpn-15.0 (1) turnkey; urgency=low
 
