@@ -2,6 +2,7 @@
 
 EASY_RSA=/etc/openvpn/easy-rsa
 HTDOCS=/var/www/openvpn/htdocs
+OPENSSL_CONF=$EASY_RSA/openssl.cnf
 SRC=/usr/local/src
 
 # enable ip forwarding
@@ -30,7 +31,12 @@ rm -rf /var/www/{js,css,images}
 sed -i 's|\(KEY_ALTNAMES=\)"$KEY_CN"|\1"DNS:$KEY_CN"|' /etc/openvpn/easy-rsa/pkitool
 
 # temporary fix to https://github.com/turnkeylinux/tracker/issues/1200
-ln -s /etc/openvpn/easy-rsa/openssl-1.0.0.cnf /etc/openvpn/easy-rsa/openssl.cnf
+ln -s /etc/openvpn/easy-rsa/openssl-1.0.0.cnf $OPENSSL_CONF
+
+# tweak default CRL expiry date - closes #1291
+COMMENT="# TurnKey default_crl_days: 3 years - see https://github.com/turnkeylinux/tracker/issues/1291"
+sed -i "/^default_days/ a $COMMENT" $OPENSSL_CONF
+sed -i "/^default_crl_days/ s|=.*|= 1095\t\t# how long before next CRL expiry|" $OPENSSL_CONF
 
 # enable default vpnserver config on boot
 systemctl enable openvpn@server
