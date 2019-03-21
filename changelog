@@ -1,3 +1,10 @@
+turnkey-openvpn-15.2 (1) turnkey; urgency=low
+
+  * Add Confconsole convienence scripts - closes #992.
+    [ Zhenya Hvorostian ]
+
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Fri, 22 Mar 2019 09:55:54 +1100
+
 turnkey-openvpn-15.1 (1) turnkey; urgency=low
 
   * extend default_crl_days to 1095 (i.e. CRL expiry = 3 years) - closes #1291
