@@ -21,6 +21,8 @@ Arguments:
                         inputs after they are used. As a result, when OpenVPN needs a
                         username/password, it will prompt for input, which may be
                         multiple times during the duration of an OpenVPN session.
+                        
+    --port=<NUMBER>     Set remote port to <NUMBER> (Default: 1194)
 
 EOF
 exit 1
@@ -37,6 +39,8 @@ if [[ "$#" < "2" ]] || [[ "$#" > "5" ]]; then
     usage
 fi
 
+REMOTE_PORT='1194'
+
 client_name=$1
 client_email=$2
 shift; shift # remove processed arguments
@@ -49,6 +53,9 @@ for item in "$@"; do
             shift;;
         --auth-nocache)
             auth_nocache="auth-nocache"
+            shift;;
+        --port*)
+            REMOTE_PORT=`echo $item | awk -F= '{print $2}'`
             shift;;
         *)
             if [[ -z "$private_subnet" ]]; then
@@ -87,7 +94,7 @@ warn "openvpn needs to be restarted for changes to take effect."
 fi
 
 cat > $KEY_DIR/$client_name.ovpn <<EOF
-remote $SERVER_ADDR 1194
+remote $SERVER_ADDR $REMOTE_PORT
 proto udp
 remote-cert-tls server
 $auth_nocache
