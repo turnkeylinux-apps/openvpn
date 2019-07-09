@@ -22,8 +22,10 @@ Arguments:
                         username/password, it will prompt for input, which may be
                         multiple times during the duration of an OpenVPN session.
                         
-    --port=<NUMBER>     Set remote port to <NUMBER> (Default: 1194)
-
+    --port=<NUMBER>     Set client to connect to port <NUMBER> (Default: 1194).
+                        Note: this does not change the port that OpenVPN listens on,
+                        just the port that the client will connect on (e.g. if you
+                        forward OpenVPN to alternate port via router/firewall/etc).
 EOF
 exit 1
 }
