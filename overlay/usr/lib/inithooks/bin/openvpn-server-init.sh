@@ -127,7 +127,6 @@ port 1194
 proto udp
 dev tun
 
-comp-lzo
 keepalive 10 120
 
 persist-key
