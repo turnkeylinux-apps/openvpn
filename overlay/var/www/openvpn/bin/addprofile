@@ -25,7 +25,7 @@ source $EASY_RSA/vars
 OVPN_PATH=$KEY_DIR/$client_name.ovpn
 [ -e $OVPN_PATH ] || fatal "$OVPN_PATH does not exist"
 
-SERVER_ADDR=$(grep remote $OVPN_PATH | awk '{print $2}')
+SERVER_ADDR=$(grep remote $OVPN_PATH | awk '{print $2;exit}')
 PROFILE_HASH=$(sha1sum $OVPN_PATH | cut -d " " -f 1)
 PROFILE_PATH=$PROFILES/$PROFILE_HASH
 
