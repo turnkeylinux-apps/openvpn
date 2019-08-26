@@ -106,7 +106,6 @@ dev tun
 resolv-retry infinite
 keepalive 10 120
 nobind
-comp-lzo
 verb 3
 
 ;user nobody
