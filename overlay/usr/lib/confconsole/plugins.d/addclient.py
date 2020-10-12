@@ -19,7 +19,7 @@ def run():
             if returncode == 0:
                 console.msgbox(TITLE, check_output(["/var/www/openvpn/bin/addprofile", name])) 
             elif returncode == 1:
-		        console.msgbox(TITLE, '{} ({})'.format(out, name))
-	    break
+                        console.msgbox(TITLE, '{} ({})'.format(out, name))
+            break
         else:
            break

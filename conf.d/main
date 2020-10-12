@@ -2,19 +2,17 @@
 
 EASY_RSA=/etc/openvpn/easy-rsa
 HTDOCS=/var/www/openvpn/htdocs
-OPENSSL_CONF=$EASY_RSA/openssl.cnf
+OPENSSL_CONF=$EASY_RSA/openssl-easyrsa.cnf
 SRC=/usr/local/src
 
 # enable ip forwarding
 sed -i "/^#net.ipv4.ip_forward=1/ s/#//" /etc/sysctl.conf
 
 mkdir -p $EASY_RSA
-cp -u /usr/share/easy-rsa/* $EASY_RSA
+cp -ur /usr/share/easy-rsa/* $EASY_RSA
 
 # tweak crl scripts for crl.jail
-for i in list-crl revoke-full; do
-    sed -i 's|^\(CRL=\).*|\1"crl.jail/crl.pem"|' $EASY_RSA/$i
-done
+sed -i 's|^\(crl=\).*|\1"crl.jail/crl.pem"|' $EASY_RSA/openssl-easyrsa.cnf
 
 # webserver related
 mkdir -p /var/www/openvpn/logs
@@ -26,12 +24,6 @@ cp /var/www/js/ui.* $HTDOCS/js/
 cp /var/www/css/*.css $HTDOCS/css/
 cp /var/www/images/{webmin.png,shell.png,tab.png} $HTDOCS/images/
 rm -rf /var/www/{js,css,images}
-
-# fix pkitool bug
-sed -i 's|\(KEY_ALTNAMES=\)"$KEY_CN"|\1"DNS:$KEY_CN"|' /etc/openvpn/easy-rsa/pkitool
-
-# temporary fix to https://github.com/turnkeylinux/tracker/issues/1200
-ln -s /etc/openvpn/easy-rsa/openssl-1.0.0.cnf $OPENSSL_CONF
 
 # tweak default CRL expiry date - closes #1291
 COMMENT="# TurnKey default_crl_days: 3 years - see https://github.com/turnkeylinux/tracker/issues/1291"

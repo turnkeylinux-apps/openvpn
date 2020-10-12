@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """Initialize OpenVPN easy-rsa, server keys and configuration
 
 Options:
@@ -27,32 +27,40 @@ import getopt
 import inithooks_cache
 from random import randint as r
 
-import ipcalc
-
 from dialog_wrapper import Dialog
-from executil import system
+import subprocess
 
 def fatal(e):
-    print >> sys.stderr, "Error:", e
+    print("Error:", e, file=sys.stderr)
     sys.exit(1)
 
 def usage(e=None):
     if e:
-        print >> sys.stderr, "Error:", e
-    print >> sys.stderr, "Syntax: %s [options]" % sys.argv[0]
-    print >> sys.stderr, __doc__
+        print("Error:", e, file=sys.stderr)
+    print("Syntax: %s [options]" % sys.argv[0], file=sys.stderr)
+    print(__doc__, file=sys.stderr)
     sys.exit(1)
 
 def expand_cidr(cidr):
-    net = ipcalc.Network(cidr)
-    return "%s %s" % (net.network(), net.netmask())
+    network, bitcount = cidr.split('/')
+    # turn /<bitcount> into a 32-long bit array
+    bits = ('1' * int(bitcount)).ljust(32, '0')
+    # split the bit array into 4 bytes
+    bytes_list = [
+        int(bits[0:8], 2),
+        int(bits[8:16], 2),
+        int(bits[16:24], 2),
+        int(bits[24:32], 2),
+    ]
+    
+    return "{} {}.{}.{}.{}".format(network, *bytes_list)
 
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "h",
             ['help', 'profile=', 'key-email=', 'public-address=', 'virtual-subnet=',
              'private-subnet='])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     profile = ""
@@ -128,7 +136,7 @@ def main():
         private_subnet = ""
 
     cmd = os.path.join(os.path.dirname(__file__), 'openvpn-server-init.sh')
-    system(cmd, key_email, public_address, virtual_subnet)
+    subprocess.run([cmd, key_email, public_address, virtual_subnet])
 
     if profile == "gateway":
         fh = open("/etc/openvpn/server.conf", "a")
@@ -142,7 +150,7 @@ def main():
         for _private_subnet in private_subnet.split(',') :
             fh.write("push \"route %s\"\n" % expand_cidr(_private_subnet))
         fh.close()
-    system('systemctl', 'start', 'openvpn@server')
+    subprocess.run(['systemctl', 'start', 'openvpn@server'])
 
 if __name__ == "__main__":
     main()

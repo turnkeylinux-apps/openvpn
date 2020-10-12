@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -eu
 
 fatal() { echo "FATAL: $@" 1>&2; exit 1; }
 warn() { echo "WARN: $@"; }
@@ -47,11 +47,13 @@ client_name=$1
 client_email=$2
 shift; shift # remove processed arguments
 
-unset password auth_nocache private_subnet
+password="nopass"
+auth_nocache=""
+private_subnet=""
 for item in "$@"; do
     case $item in
         --pass)
-            password='--pass'
+            password=''
             shift;;
         --auth-nocache)
             auth_nocache="auth-nocache"
@@ -73,14 +75,22 @@ EASY_RSA=/etc/openvpn/easy-rsa
 SERVER_CFG=/etc/openvpn/server.conf
 SERVER_CCD=/etc/openvpn/server.ccd
 
+export EASYRSA_VARS_FILE=$EASY_RSA/vars
+
+read_var() {
+    name=$1
+    sed -n 's/set_var '"$name"' "\(.*\)"/\1/p' $EASY_RSA/vars
+}
+
+KEY_DIR=$(read_var EASYRSA_PKI)
 SERVER_ADDR=$(grep PUBLIC_ADDRESS $SERVER_CFG | awk '{print $3}')
 [ "$SERVER_ADDR" ] || fatal "unable to determine PUBLIC_ADDRESS from $SERVER_CFG"
 
-source $EASY_RSA/vars
 [ -d $KEY_DIR ] || mkdir "$KEY_DIR"
 [ -e $KEY_DIR/$client_name.ovpn ] && fatal "$KEY_DIR/$client_name.ovpn exists"
 
-KEY_CN=$client_name KEY_EMAIL=$client_email $EASY_RSA/pkitool $password
+export EASYRSA_PKI=$EASY_RSA/keys
+KEY_CN=$client_name KEY_EMAIL=$client_email $EASY_RSA/easyrsa build-client-full $client_name $password
 
 if [ "$private_subnet" ]; then
 cat >> $SERVER_CFG <<EOF
@@ -96,12 +106,16 @@ warn "openvpn needs to be restarted for changes to take effect."
 fi
 
 cat > $KEY_DIR/$client_name.ovpn <<EOF
+client
 remote $SERVER_ADDR $REMOTE_PORT
 proto udp
 remote-cert-tls server
 $auth_nocache
 
-client
+cipher AES-256-CBC
+auth SHA256
+
+tls-client
 dev tun
 resolv-retry infinite
 keepalive 10 120
@@ -121,11 +135,11 @@ $(cat $KEY_DIR/ta.key)
 </tls-auth>
 
 <cert>
-$(cat $KEY_DIR/$client_name.crt)
+$(cat $KEY_DIR/issued/$client_name.crt)
 </cert>
 
 <key>
-$(cat $KEY_DIR/$client_name.key)
+$(cat $KEY_DIR/private/$client_name.key)
 </key>
 EOF
 
