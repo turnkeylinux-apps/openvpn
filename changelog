@@ -1,3 +1,12 @@
+turnkey-openvpn-16.0 (1) turnkey; urgency=low
+
+  * Latest Debian Buster package version of OpenVPN and other components.
+
+  * Note: Please refer to turnkey-core's changelog for changes common to all
+    appliances. Here we only describe changes specific to this appliance.
+
+ -- Stefan Davis <stefan@turnkeylinux>  Mon, 12 Oct 2020 17:50:31 +1100
+
 turnkey-openvpn-15.2 (1) turnkey; urgency=low
 
   * Add Confconsole convienence scripts - closes #992.
