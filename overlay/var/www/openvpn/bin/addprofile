@@ -21,7 +21,12 @@ EASY_RSA=/etc/openvpn/easy-rsa
 TEMPLATE=/var/www/openvpn/template.html
 PROFILES=/var/www/openvpn/htdocs/profiles
 
-source $EASY_RSA/vars
+read_var() {
+    name=$1
+    sed -n 's/set_var '"$name"' "\(.*\)"/\1/p' $EASY_RSA/vars
+}
+
+KEY_DIR=$(read_var EASYRSA_PKI)
 OVPN_PATH=$KEY_DIR/$client_name.ovpn
 [ -e $OVPN_PATH ] || fatal "$OVPN_PATH does not exist"
 
