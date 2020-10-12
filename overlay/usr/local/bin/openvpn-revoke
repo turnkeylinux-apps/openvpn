@@ -47,7 +47,7 @@ mv $EASYRSA_PKI/crl.pem $EASYRSA_PKI/crl.jail/etc/openvpn
 chown nobody:nogroup $EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem
 chmod +r $EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem
 
-mv "$EASYRSA_PKI/$client_name.ovpn" "$EASYRSA_PKI/$client_name.ovpn.revoked"
+rm "$EASYRSA_PKI/$client_name.ovpn"
 info "revoked $EASYRSA_PKI/$client_name.ovpn"
 
 
