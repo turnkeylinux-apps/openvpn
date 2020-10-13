@@ -1,8 +1,7 @@
 #include <turnkey/base>
 
-make
 ipcalc
-python-ipcalc
+make
 openvpn
 easy-rsa
 lighttpd

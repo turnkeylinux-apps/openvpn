@@ -14,8 +14,8 @@ def run():
     
     if profiles:
         ret, profile = console.menu(TITLE, "Select profile", profiles) 
-        if ret == 0:
-            console.msgbox(TITLE, check_output(["/var/www/openvpn/bin/addprofile", profile]))
+        if ret == 'ok':
+            console.msgbox(TITLE, check_output(["/var/www/openvpn/bin/addprofile", profile], text=True))
 
     if not profiles:
         console.msgbox(TITLE, "First create a profile with Addclient plugin")
