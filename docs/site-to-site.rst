@@ -92,7 +92,7 @@ restart the service::
     $ openvpn-addclient office office@example.com 172.16.1.0/24
       INFO: generated /etc/openvpn/easy-rsa/keys/office.ovpn
 
-    $ /etc/init.d/openvpn restart
+    $ systemctl restart openvpn@server.service
 
 Step 4: Securely transfer the client profile to the Office OpenVPN client
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -105,11 +105,14 @@ the client via an encrypted channel, such as RSYNC over SSH or SCP::
 
 Note that in the above example the profile extension has changed from
 ovpn to conf so the connection will be created at server boot by the
-openvpn initscript.
+openvpn initscript. Note too that the name of the .conf file will also
+be the name of the OpenVPN service instance. I.e. in this example
+'office-to-vpc'.
 
-Lastly, start the VPN connection::
+Lastly, enable the VPN client service and start the connection::
 
-    $ /etc/init.d/openvpn start
+    $ systemctl start openvpn@office-to-vpc.service
+    $ systemctl status openvpn@office-to-vpc.service
 
 You should now be able to connect from the office OpenVPN server to
 servers in the VPC private subnet, for example::
@@ -166,4 +169,3 @@ revoked::
 
 
 .. _contrib: https://github.com/turnkeylinux-apps/openvpn/tree/master/contrib
-
