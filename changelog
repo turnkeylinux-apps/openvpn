@@ -1,3 +1,12 @@
+turnkey-openvpn-16.2 (UNRELEASED) turnkey; urgency=low
+
+  * ...
+
+  * Enable 'mod_setenv' in LigHTTPd config - part of #1546.
+    [ Stefan Davis <stefan@turnkeylinux.org> ]
+
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Wed, 04 Aug 2021 09:14:25 +1000
+
 turnkey-openvpn-16.1 (1) turnkey; urgency=low
 
   * Rebuilt against latest Debian Buster
