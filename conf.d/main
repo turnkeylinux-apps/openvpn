@@ -17,7 +17,7 @@ sed -i 's|^\(crl=\).*|\1"crl.jail/crl.pem"|' $EASY_RSA/openssl-easyrsa.cnf
 # webserver related
 mkdir -p /var/www/openvpn/logs
 chown www-data:www-data /var/www/openvpn/logs
-lighty-disable-mod ssl
+ln -s /etc/lighttpd/conf-{available,enabled}/50-tklcp.conf
 
 mkdir -p $HTDOCS/{css,images}
 cp /var/www/js/ui.* $HTDOCS/js/

@@ -5,4 +5,4 @@ make
 openvpn
 easy-rsa
 lighttpd
-
+lighttpd-mod-openssl

@@ -22,12 +22,14 @@ Note: options not specified but required by profile will be asked interactively
 """
 
 import os
+from os.path import exists
 import sys
 import getopt
-import inithooks_cache
+from libinithooks import inithooks_cache
 from random import randint as r
 
-from dialog_wrapper import Dialog
+from libinithooks import is_interactive, warn, info
+from libinithooks.dialog_wrapper import Dialog
 import subprocess
 
 def fatal(e):
@@ -84,6 +86,21 @@ def main():
             private_subnet = val
 
     dialog = Dialog('TurnKey Linux - First boot configuration')
+
+    tun_exists = exists('/dev/net/tun')
+    if not tun_exists:
+        if is_interactive:
+            dialog.msgbox('Tun device not created', '''
+Failed to create `/dev/net/tun` device on boot, this is expected when running inside a non-privlidged container.
+
+If you are running on an unprivlidged container, you will need to create this device on the host.''')
+        else:
+            warn('Failed to create `/dev/net/tun` device on boot, this is expected when '
+                + 'running inside a non-privlidged container. If you are '
+                + 'running on an unprivlidged container, you will need to '
+                + 'create this device on the host.')
+    else:
+        info('/dev/net/tun created successfully')
 
     if not profile:
         profile = dialog.menu(
