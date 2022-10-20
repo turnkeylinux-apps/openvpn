@@ -91,13 +91,13 @@ def main():
     if not tun_exists:
         if is_interactive:
             dialog.msgbox('Tun device not created', '''
-Failed to create `/dev/net/tun` device on boot, this is expected when running inside a non-privlidged container.
+Failed to create `/dev/net/tun` device on boot, this is expected when running inside a non-privileged container.
 
-If you are running on an unprivlidged container, you will need to create this device on the host.''')
+If you are running on an unprivileged container, you will need to create this device on the host.''')
         else:
             warn('Failed to create `/dev/net/tun` device on boot, this is expected when '
-                + 'running inside a non-privlidged container. If you are '
-                + 'running on an unprivlidged container, you will need to '
+                + 'running inside a non-privileged container. If you are '
+                + 'running on an unprivileged container, you will need to '
                 + 'create this device on the host.')
     else:
         info('/dev/net/tun created successfully')
