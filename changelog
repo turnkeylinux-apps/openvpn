@@ -1,3 +1,16 @@
+turnkey-openvpn-17.0 (1) turnkey; urgency=low
+
+  * Updated all relevant Debian packages to Bullseye/11 versions
+
+  * Close #1522 (set timezone in inithook)
+
+  * Close #1328 (initfence not working on aws)
+
+  * Note: Please refer to turnkey-core's 17.0 changelog for changes common to all
+    appliances. Here we only describe changes specific to this appliance.
+
+ -- Stefan Davis <stefan@turnkeylinux.org>  Wed, 20 Jul 2022 03:01:51 +0000
+
 turnkey-openvpn-16.1 (1) turnkey; urgency=low
 
   * Rebuilt against latest Debian Buster
