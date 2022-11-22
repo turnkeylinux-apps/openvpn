@@ -1,3 +1,13 @@
+turnkey-openvpn-17.1 (1) turnkey; urgency=low
+
+  * Updated all Debian packages to latest.
+    [ autopatched by buildtasks ]
+
+  * Patched bugfix release. Closes #1734.
+    [ autopatched by buildtasks ]
+
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Fri, 11 Nov 2022 02:00:46 +0000
+
 turnkey-openvpn-17.0 (1) turnkey; urgency=low
 
   * Updated all relevant Debian packages to Bullseye/11 versions
