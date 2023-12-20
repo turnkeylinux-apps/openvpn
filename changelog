@@ -1,3 +1,18 @@
+turnkey-openvpn-18.0 (1) turnkey; urgency=low
+
+  * Updated all Debian packages to latest.
+
+  * Helper scripts updated to match upstream changes from easy-rsa.
+
+  * lighttpd config updated to match upstream changes.
+
+  * Shell scripts linted.
+
+  * Note: Please refer to turnkey-core's 18.0 changelog for changes common to all
+    appliances. Here we only describe changes specific to this appliance.
+
+ -- Anton Pyrogovskyi <anton@turnkeylinux.org>  Wed, 20 Dec 2023 23:14:06 +0100
+
 turnkey-openvpn-17.1 (1) turnkey; urgency=low
 
   * Updated all Debian packages to latest.
