@@ -95,33 +95,33 @@ set_var EASYRSA_REQ_PROVINCE "$KEY_PROVINCE"
 set_var EASYRSA_REQ_CITY "$KEY_CITY"
 EOF
 
-# cleanup any prior configurations and initialize
+# clean up any prior configurations and initialize
 mkdir -p "$(dirname "$SERVER_IPP")"
 mkdir -p "$(dirname "$SERVER_LOG")"
 mkdir -p "$SERVER_CCD"
 
 # generate ca and server keys/certs
-echo "yes" | $EASYRSA/easyrsa init-pki soft-reset
-$EASYRSA/easyrsa --batch gen-dh
-$EASYRSA/easyrsa --batch --req-cn='server' build-ca nopass
-$EASYRSA/easyrsa --batch gen-req server nopass
-$EASYRSA/easyrsa --batch sign-req server server
-openvpn --genkey secret $EASYRSA_PKI/ta.key
+export EASYRSA_BATCH=1
+$EASYRSA/easyrsa init-pki soft-reset
+$EASYRSA/easyrsa gen-dh
+$EASYRSA/easyrsa --req-cn='server' build-ca nopass
+$EASYRSA/easyrsa gen-req server nopass
+$EASYRSA/easyrsa sign-req server server
 
 # setup crl jail with empty crl
-mkdir -p $EASYRSA_PKI/crl.jail/etc/openvpn/
-export KEY_OU=""
-export KEY_CN=""
-export KEY_NAME=""
-$OPENSSL ca -gencrl -config "$KEY_CONFIG" -out "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
-chown nobody:nogroup $EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem
-chmod +r $EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem
-
 mkdir -p $EASYRSA_PKI/crl.jail/etc/openvpn
 mkdir -p $EASYRSA_PKI/crl.jail/tmp
 
+$EASYRSA/easyrsa gen-crl
+mv $EASYRSA_PKI/crl.pem $EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem
+
+chown nobody:nogroup $EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem
+chmod +r $EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem
+
 mv $SERVER_CCD $EASYRSA_PKI/crl.jail/etc/openvpn/
 ln -sf $EASYRSA_PKI/crl.jail/etc/openvpn/server.ccd $SERVER_CCD
+
+openvpn --genkey secret $EASYRSA_PKI/ta.key
 
 # generate server configuration
 cat > $SERVER_CFG <<EOF
@@ -130,9 +130,6 @@ cat > $SERVER_CFG <<EOF
 port 1194
 proto udp
 dev tun
-
-cipher AES-256-CBC
-auth SHA256
 
 keepalive 10 120
 
