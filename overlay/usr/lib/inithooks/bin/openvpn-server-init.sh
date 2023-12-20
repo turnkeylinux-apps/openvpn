@@ -1,7 +1,7 @@
 #!/bin/bash -eux
 
-fatal() { echo "FATAL [$(basename $0)]: $@" 1>&2; exit 1; }
-info() { echo "INFO [$(basename $0)]: $@"; }
+fatal() { echo "FATAL [$(basename "$0")]: $*" >&2; exit 1; }
+info() { echo "INFO [$(basename "$0")]: $*"; }
 
 usage() {
 cat<<EOF
@@ -30,8 +30,8 @@ exit 1
 }
 
 expand_cidr() {
-    addr=$(ipcalc -n $1 | grep Address | awk '{print $2}')
-    mask=$(ipcalc -n $1 | grep Netmask | awk '{print $2}')
+    addr=$(ipcalc -n "$1" | grep Address | awk '{print $2}')
+    mask=$(ipcalc -n "$1" | grep Netmask | awk '{print $2}')
     echo "$addr $mask"
 }
 which ipcalc >/dev/null || fatal "ipcalc is not installed"
@@ -40,10 +40,9 @@ if [[ "$#" != "3" ]]; then
     usage
 fi
 
-key_email=$1
-public_address=$2
-virtual_subnet=$3
-
+key_email="$1"
+public_address="$2"
+virtual_subnet="$3"
 
 KEY_ORG="${KEY_ORG:-TurnKey Linux}"
 KEY_OU="${KEY_OU:-OpenVPN}"
@@ -55,11 +54,11 @@ KEY_SIZE="${KEY_SIZE:-2048}"
 KEY_EXPIRE="${KEY_EXPIRE:-3650}"
 CA_EXPIRE="${CA_EXPIRE:-3650}"
 
-EASYRSA=/etc/openvpn/easy-rsa
-SERVER_CFG=/etc/openvpn/server.conf
-SERVER_CCD=/etc/openvpn/server.ccd
-SERVER_LOG=/var/log/openvpn/server.log
-SERVER_IPP=/var/lib/openvpn/server.ipp
+EASYRSA='/etc/openvpn/easy-rsa'
+SERVER_CFG='/etc/openvpn/server.conf'
+SERVER_CCD='/etc/openvpn/server.ccd'
+SERVER_LOG='/var/log/openvpn/server.log'
+SERVER_IPP='/var/lib/openvpn/server.ipp'
 
 export EASYRSA_PKI="$EASYRSA/keys"
 export EASYRSA_CERT_EXPIRE="$KEY_EXPIRE"
@@ -74,8 +73,8 @@ export EASYRSA_REQ_PROVINCE="$KEY_PROVINCE"
 export EASYRSA_REQ_CITY="$KEY_CITY"
 export EASYRSA_REQ_EMAIL="$key_email"
 
-# remove any files from a previous run to ensure inithook is idempotent
-rm -rf "$EASYRSA_PKI" "$SERVER_CFG" "$SERVER_CCD"
+# remove files from a previous run to ensure inithook is idempotent
+rm -rf "$EASYRSA_PKI" "$SERVER_CFG" "$SERVER_CCD" "$SERVER_IPP"
 
 KEY_CONFIG="$EASYRSA/openssl-easyrsa.cnf"
 OPENSSL="$(which openssl)"
@@ -97,17 +96,14 @@ set_var EASYRSA_REQ_CITY "$KEY_CITY"
 EOF
 
 # cleanup any prior configurations and initialize
-echo "yes" | $EASYRSA/easyrsa clean-all soft-reset
-rm -f $SERVER_IPP
-mkdir -p $(dirname $SERVER_IPP)
-mkdir -p $(dirname $SERVER_LOG)
-mkdir -p $SERVER_CCD
+mkdir -p "$(dirname "$SERVER_IPP")"
+mkdir -p "$(dirname "$SERVER_LOG")"
+mkdir -p "$SERVER_CCD"
 
 # generate ca and server keys/certs
-export KEY_CN=server
 echo "yes" | $EASYRSA/easyrsa init-pki soft-reset
 $EASYRSA/easyrsa --batch gen-dh
-$EASYRSA/easyrsa --batch --req-cn="must-be-unique" build-ca nopass
+$EASYRSA/easyrsa --batch --req-cn='server' build-ca nopass
 $EASYRSA/easyrsa --batch gen-req server nopass
 $EASYRSA/easyrsa --batch sign-req server server
 openvpn --genkey secret $EASYRSA_PKI/ta.key
@@ -162,5 +158,5 @@ verb 4
 # virtual subnet unique for openvpn to draw client addresses from
 # the server will be configured with x.x.x.1
 # important: must not be used on your network
-server $(expand_cidr $virtual_subnet)
+server $(expand_cidr "$virtual_subnet")
 EOF

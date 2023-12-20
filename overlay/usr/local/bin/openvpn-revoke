@@ -1,8 +1,8 @@
 #!/bin/bash -eu
 
-fatal() { echo "FATAL: $@" 1>&2; exit 1; }
-warn() { echo "WARN: $@"; }
-info() { echo "INFO: $@"; }
+fatal() { echo "FATAL: $*" >&2; exit 1; }
+warn() { echo "WARN: $*"; }
+info() { echo "INFO: $*"; }
 
 usage() {
 cat<<EOF
@@ -16,21 +16,21 @@ EOF
 exit 1
 }
 
-if [[ "$#" -ne "1" ]]; then
+if [[ "$#" -ne 1 ]]; then
     usage
 fi
 
-client_name=$1
+client_name="$1"
 shift
 
-export EASYRSA=/etc/openvpn/easy-rsa
-export EASYRSA_PKI=$EASYRSA/keys
+export EASYRSA='/etc/openvpn/easy-rsa'
+export EASYRSA_PKI="$EASYRSA/keys"
 
-$EASYRSA/easyrsa revoke $client_name
-$EASYRSA/easyrsa gen-crl
-mv $EASYRSA_PKI/crl.pem $EASYRSA_PKI/crl.jail/etc/openvpn
-chown nobody:nogroup $EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem
-chmod +r $EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem
+"$EASYRSA/easyrsa" revoke "$client_name"
+"$EASYRSA/easyrsa" gen-crl
+mv "$EASYRSA_PKI/crl.pem" "$EASYRSA_PKI/crl.jail/etc/openvpn"
+chown nobody:nogroup "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
+chmod +r "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
 
 rm "$EASYRSA_PKI/$client_name.ovpn"
 info "revoked $EASYRSA_PKI/$client_name.ovpn"
