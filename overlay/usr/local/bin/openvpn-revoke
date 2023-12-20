@@ -28,7 +28,7 @@ export EASYRSA_PKI="$EASYRSA/keys"
 
 "$EASYRSA/easyrsa" revoke "$client_name"
 "$EASYRSA/easyrsa" gen-crl
-mv "$EASYRSA_PKI/crl.pem" "$EASYRSA_PKI/crl.jail/etc/openvpn"
+cp "$EASYRSA_PKI/crl.pem" "$EASYRSA_PKI/crl.jail/etc/openvpn"
 chown nobody:nogroup "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
 chmod +r "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
 
