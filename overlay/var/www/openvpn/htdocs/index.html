@@ -21,8 +21,6 @@
         </script>
         <script type="text/javascript">
             jQuery(document).ready(function($) {
-              webshell="https://"+window.location.hostname+":12320";
-              document.getElementById("webshell").href = webshell;
               webmin="https://"+window.location.hostname+":12321";
               document.getElementById("webmin").href = webmin;
             });
@@ -41,13 +39,10 @@
             <div id="cp">
                 <div class="fragment-content">
                     <div>
-                        <a id="webshell" href="">
-                        <img src="/images/shell.png"/>Web Shell</a>
-                    </div>
-                    <div>
                         <a id="webmin" href="">
                         <img src="/images/webmin.png"/>Webmin</a>
                     </div>
+                    <div></div>
                     <div></div>
                     <div></div>
                     <div></div>
