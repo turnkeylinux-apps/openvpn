@@ -1,8 +1,8 @@
 #!/bin/bash -eu
 
-fatal() { echo "FATAL: $@" 1>&2; exit 1; }
-warn() { echo "WARN: $@"; }
-info() { echo "INFO: $@"; }
+fatal() { echo "FATAL: $*" >&2; exit 1; }
+warn() { echo "WARN: $*"; }
+info() { echo "INFO: $*"; }
 
 usage() {
 cat<<EOF
@@ -31,81 +31,76 @@ exit 1
 }
 
 expand_cidr() {
-    addr=$(ipcalc -n $1 | grep Address | awk '{print $2}')
-    mask=$(ipcalc -n $1 | grep Netmask | awk '{print $2}')
+    addr=$(ipcalc -n "$1" | grep Address | awk '{print $2}')
+    mask=$(ipcalc -n "$1" | grep Netmask | awk '{print $2}')
     echo "$addr $mask"
 }
 which ipcalc >/dev/null || fatal "ipcalc is not installed"
 
-if [[ "$#" < "2" ]] || [[ "$#" > "5" ]]; then
+if [[ "$#" -lt "2" ]] || [[ "$#" -gt "5" ]]; then
     usage
 fi
 
 REMOTE_PORT='1194'
 
-client_name=$1
-client_email=$2
-shift; shift # remove processed arguments
+client_name="$1"
+client_email="$2"
+shift 2
 
-password="nopass"
-auth_nocache=""
-private_subnet=""
+password='nopass'
+auth_nocache=
+private_subnet=
+
 for item in "$@"; do
-    case $item in
+    case "$item" in
         --pass)
             password=''
-            shift;;
+            ;;
         --auth-nocache)
             auth_nocache="auth-nocache"
-            shift;;
+            ;;
         --port*)
-            REMOTE_PORT=`echo $item | awk -F= '{print $2}'`
-            shift;;
+            REMOTE_PORT="$(echo "$item" | awk -F= '{print $2}')"
+            ;;
         *)
             if [[ -z "$private_subnet" ]]; then
-                private_subnet=$1
+                private_subnet="$1"
             else
                 usage
             fi
-            shift;;
+            ;;
     esac
+    shift
 done
 
-EASY_RSA=/etc/openvpn/easy-rsa
-SERVER_CFG=/etc/openvpn/server.conf
-SERVER_CCD=/etc/openvpn/server.ccd
+SERVER_CFG='/etc/openvpn/server.conf'
+SERVER_CCD='/etc/openvpn/server.ccd'
 
-export EASYRSA_VARS_FILE=$EASY_RSA/vars
+export EASYRSA='/etc/openvpn/easy-rsa'
+export EASYRSA_PKI="$EASYRSA/keys"
 
-read_var() {
-    name=$1
-    sed -n 's/set_var '"$name"' "\(.*\)"/\1/p' $EASY_RSA/vars
-}
+mkdir -p "$EASYRSA_PKI"
 
-KEY_DIR=$(read_var EASYRSA_PKI)
-SERVER_ADDR=$(grep PUBLIC_ADDRESS $SERVER_CFG | awk '{print $3}')
-[ "$SERVER_ADDR" ] || fatal "unable to determine PUBLIC_ADDRESS from $SERVER_CFG"
+SERVER_ADDR="$(grep PUBLIC_ADDRESS "$SERVER_CFG" | awk '{print $3}')"
+[[ -n "$SERVER_ADDR" ]] || fatal "unable to determine PUBLIC_ADDRESS from $SERVER_CFG"
+[[ -e "$EASYRSA_PKI/$client_name.ovpn" ]] && fatal "$EASYRSA_PKI/$client_name.ovpn exists"
 
-[ -d $KEY_DIR ] || mkdir "$KEY_DIR"
-[ -e $KEY_DIR/$client_name.ovpn ] && fatal "$KEY_DIR/$client_name.ovpn exists"
+EASYRSA_REQ_EMAIL="$client_email" "$EASYRSA/easyrsa" --batch build-client-full "$client_name" "$password"
 
-export EASYRSA_PKI=$EASY_RSA/keys
-KEY_CN=$client_name KEY_EMAIL=$client_email $EASY_RSA/easyrsa build-client-full $client_name $password
-
-if [ "$private_subnet" ]; then
-cat >> $SERVER_CFG <<EOF
+if [[ -n "$private_subnet" ]]; then
+cat >> "$SERVER_CFG" <<EOF
 # subnet behind a client: $client_name
-route $(expand_cidr $private_subnet)
+route $(expand_cidr "$private_subnet")
 
 EOF
 
-cat > $SERVER_CCD/$client_name <<EOF
-iroute $(expand_cidr $private_subnet)
+cat > "$SERVER_CCD/$client_name" <<EOF
+iroute $(expand_cidr "$private_subnet")
 EOF
 warn "openvpn needs to be restarted for changes to take effect."
 fi
 
-cat > $KEY_DIR/$client_name.ovpn <<EOF
+cat > "$EASYRSA_PKI/$client_name.ovpn" <<EOF
 client
 remote $SERVER_ADDR $REMOTE_PORT
 proto udp
@@ -126,23 +121,23 @@ verb 3
 ;group nogroup
 
 <ca>
-$(cat $KEY_DIR/ca.crt)
+$(cat "$EASYRSA_PKI/ca.crt")
 </ca>
 
 key-direction 1
 <tls-auth>
-$(cat $KEY_DIR/ta.key)
+$(cat "$EASYRSA_PKI/ta.key")
 </tls-auth>
 
 <cert>
-$(cat $KEY_DIR/issued/$client_name.crt)
+$(cat "$EASYRSA_PKI/issued/$client_name.crt")
 </cert>
 
 <key>
-$(cat $KEY_DIR/private/$client_name.key)
+$(cat "$EASYRSA_PKI/private/$client_name.key")
 </key>
 EOF
 
 echo
-info "generated $KEY_DIR/$client_name.ovpn"
+info "generated $EASYRSA_PKI/$client_name.ovpn"
 

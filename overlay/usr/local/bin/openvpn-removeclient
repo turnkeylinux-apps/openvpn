@@ -1,0 +1,37 @@
+#!/bin/bash -eu
+
+fatal() { echo "FATAL: $*" >&2; exit 1; }
+warn() { echo "WARN: $*"; }
+info() { echo "INFO: $*"; }
+
+usage() {
+cat<<EOF
+Syntax: $0 client-name
+Revoke a client's certificate
+
+Arguments:
+
+    client-name         Unique name for client
+EOF
+exit 1
+}
+
+if [[ "$#" -ne 1 ]]; then
+    usage
+fi
+
+client_name="$1"
+shift
+
+export EASYRSA='/etc/openvpn/easy-rsa'
+export EASYRSA_PKI="$EASYRSA/keys"
+
+"$EASYRSA/easyrsa" revoke "$client_name"
+"$EASYRSA/easyrsa" gen-crl
+cp "$EASYRSA_PKI/crl.pem" "$EASYRSA_PKI/crl.jail/etc/openvpn"
+chown nobody:nogroup "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
+chmod +r "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
+
+rm "$EASYRSA_PKI/$client_name.ovpn"
+info "revoked $EASYRSA_PKI/$client_name.ovpn"
+

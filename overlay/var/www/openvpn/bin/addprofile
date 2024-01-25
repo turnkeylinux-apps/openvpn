@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-fatal() { echo "FATAL: $@" 1>&2; exit 1; }
+fatal() { echo "FATAL: $*" >&2; exit 1; }
 
 usage() {
 cat<<EOF
@@ -17,28 +17,24 @@ fi
 
 client_name=$1
 
-EASY_RSA=/etc/openvpn/easy-rsa
-TEMPLATE=/var/www/openvpn/template.html
-PROFILES=/var/www/openvpn/htdocs/profiles
+export EASYRSA='/etc/openvpn/easy-rsa'
+export EASYRSA_PKI='/etc/openvpn/easy-rsa/keys'
 
-read_var() {
-    name=$1
-    sed -n 's/set_var '"$name"' "\(.*\)"/\1/p' $EASY_RSA/vars
-}
+TEMPLATE='/var/www/openvpn/template.html'
+PROFILES='/var/www/openvpn/htdocs/profiles'
 
-KEY_DIR=$(read_var EASYRSA_PKI)
-OVPN_PATH=$KEY_DIR/$client_name.ovpn
-[ -e $OVPN_PATH ] || fatal "$OVPN_PATH does not exist"
+OVPN_PATH="$EASYRSA_PKI/$client_name.ovpn"
+[ -e "$OVPN_PATH" ] || fatal "$OVPN_PATH does not exist"
 
-SERVER_ADDR=$(grep remote $OVPN_PATH | awk '{print $2;exit}')
-PROFILE_HASH=$(sha1sum $OVPN_PATH | cut -d " " -f 1)
-PROFILE_PATH=$PROFILES/$PROFILE_HASH
+SERVER_ADDR="$(grep remote "$OVPN_PATH" | awk '{print $2;exit}')"
+PROFILE_HASH="$(sha1sum "$OVPN_PATH" | cut -d " " -f 1)"
+PROFILE_PATH="$PROFILES/$PROFILE_HASH"
 
-mkdir -p $PROFILE_PATH
-cp $OVPN_PATH $PROFILE_PATH/
-sed "s|CLIENT_NAME|$client_name|" $TEMPLATE > $PROFILE_PATH/index.html
-chown -R www-data:www-data $PROFILES
-chmod 440 $PROFILE_PATH/$client_name.ovpn
+mkdir -p "$PROFILE_PATH"
+cp "$OVPN_PATH" "$PROFILE_PATH/"
+sed "s|CLIENT_NAME|$client_name|" "$TEMPLATE" > "$PROFILE_PATH/index.html"
+chown -R www-data:www-data "$PROFILES"
+chmod 440 "$PROFILE_PATH/$client_name.ovpn"
 
-echo "URL: https://$SERVER_ADDR/profiles/$PROFILE_HASH/"
+echo "https://$SERVER_ADDR/profiles/$PROFILE_HASH/"
 

@@ -21,8 +21,6 @@
         </script>
         <script type="text/javascript">
             jQuery(document).ready(function($) {
-              webshell="https://"+window.location.hostname+":12320";
-              document.getElementById("webshell").href = webshell;
               webmin="https://"+window.location.hostname+":12321";
               document.getElementById("webmin").href = webmin;
             });
@@ -41,13 +39,10 @@
             <div id="cp">
                 <div class="fragment-content">
                     <div>
-                        <a id="webshell" href="">
-                        <img src="/images/shell.png"/>Web Shell</a>
-                    </div>
-                    <div>
                         <a id="webmin" href="">
                         <img src="/images/webmin.png"/>Webmin</a>
                     </div>
+                    <div></div>
                     <div></div>
                     <div></div>
                     <div></div>
@@ -76,8 +71,8 @@
                     <pre>/var/www/openvpn/bin/addprofile client-name</pre>
                     <h3>Manually trigger deletion of expired profile download urls</h3>
                     <pre>/etc/cron.hourly/openvpn-profiles-delexpired</pre>
-                    <h3>Revoke client certificate</h3>
-                    <pre>openvpn-revoke client-name</pre>
+                    <h3>Revoke client certificate and remove client profile</h3>
+                    <pre>openvpn-removeclient client-name</pre>
                 </div>
             </div>
         </div>
