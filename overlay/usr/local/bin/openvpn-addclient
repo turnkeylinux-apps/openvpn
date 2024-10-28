@@ -107,8 +107,8 @@ proto udp
 remote-cert-tls server
 $auth_nocache
 
-cipher AES-256-CBC
-auth SHA256
+cipher AES-256-GCM
+auth SHA512
 
 tls-client
 dev tun

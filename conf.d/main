@@ -35,3 +35,6 @@ systemctl enable openvpn@server
 
 # enable openvpn-tun service (creates /dev/net/tun device in containers - closes #1011)
 systemctl enable openvpn-tun.service
+
+echo 'cipher AES-256-GCM' >> /etc/openvpn/server.conf
+echo 'auth SHA512' >> /etc/openvpn/server.conf
