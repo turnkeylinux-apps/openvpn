@@ -1,6 +1,26 @@
+turnkey-openvpn-18.1 (1) turnkey; urgency=low
+
+  * Update/fix TLS config - closes #1996.
+
+  * v18.1 rebuild - includes latest Debian & TurnKey packages.
+
+  * Configuration console (confconsole) - v2.1.6:
+    - Bugfix broken DNS-01 Let's Encrypt challenge - closes #1876 & #1895.
+      Fixed in v2.1.5 - already included in some appliances.
+    - Let's Encrypt/Dehydrated - bugfix cron failure - closes #1962.
+    - General dehydrated-wrapper code cleanup - now passes shellcheck.
+
+  * Web management console (webmin):
+    - Include webmin-logviewer module by default - closes #1866.
+    - Replace webmin-shell with webmin-xterm module by default - closes #1904.
+
+  * Reduce log noise by creating ntpsec log dir - closes #1952.
+
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Mon, 11 Nov 2024 23:08:23 +0000
+
 turnkey-openvpn-18.0 (1) turnkey; urgency=low
 
-  * Install OpenVPN from Debina repos - v2.6.3.
+  * Install OpenVPN from Debian repos - v2.6.3.
     [Anton Pyrogovskyi <anton@turnkeylinux.org>]
 
   * Helper scripts updated to match upstream changes from easy-rsa.
@@ -66,7 +86,6 @@ turnkey-openvpn-18.0 (1) turnkey; urgency=low
     - Ensure that Webmin uses HTTPS with default cert
       (/etc/ssl/private/cert.pem).
     - Disabled Webmin Let's Encrypt (for now).
-
 
   * Web shell (shellinabox):
     - Completely removed in v18.0 (Webmin now has a proper interactive shell).
