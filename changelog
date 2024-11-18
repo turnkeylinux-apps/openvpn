@@ -3,6 +3,7 @@ turnkey-openvpn-18.1 (1) turnkey; urgency=low
   * v18.1 rebuild - includes latest Debian & TurnKey packages.
 
   * Update/fix TLS config - closes #1996.
+    [Stefan Davis <stefan@turnkeylinux.org>]
 
   * Configuration console (confconsole) - v2.1.6+2+ge808780:
     - Fix password quoting in mail relay plugin - support SASL
@@ -18,7 +19,7 @@ turnkey-openvpn-18.1 (1) turnkey; urgency=low
 
   * Reduce log noise by creating ntpsec log dir - closes #1952.
 
- -- Jeremy Davis <jeremy@turnkeylinux.org>  Thu, 14 Nov 2024 02:48:07 +0000
+ -- Jeremy Davis <jeremy@turnkeylinux.org>  Mon, 18 Nov 2024 06:14:22 +0000
 
 turnkey-openvpn-18.0 (1) turnkey; urgency=low
 
