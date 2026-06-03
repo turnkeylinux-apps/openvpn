@@ -156,4 +156,7 @@ verb 4
 # the server will be configured with x.x.x.1
 # important: must not be used on your network
 server $(expand_cidr "$virtual_subnet")
+
+cipher AES-256-GCM
+auth SHA512
 EOF
