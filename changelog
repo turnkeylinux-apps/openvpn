@@ -1,3 +1,9 @@
+turnkey-openvpn-19.0 (1) turnkey; urgency=low
+
+  * Install OpenVPN from Debian repos - v2.6.14.
+
+ -- Stefan Davis <nafets.sivad@gmail.com>  Fri, 26 Jun 2026 05:05:23 +0000
+
 turnkey-openvpn-18.1 (1) turnkey; urgency=low
 
   * v18.1 rebuild - includes latest Debian & TurnKey packages.
