@@ -1,4 +1,4 @@
-turnkey-openvpn-19.1 (1) turnkey; urgency=low
+turnkey-openvpn-19.0 (1) turnkey; urgency=low
 
   * Install OpenVPN from Debian repos - v2.6.14.
 
