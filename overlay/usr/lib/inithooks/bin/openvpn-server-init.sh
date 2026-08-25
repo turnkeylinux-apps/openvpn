@@ -159,4 +159,23 @@ server $(expand_cidr "$virtual_subnet")
 
 data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305
 auth SHA512
+
+# tell clients when the server restarts or exits - clients reconnect quicker
+# (don't need to wait for keepalive timeout)
+explicit-exit-notify 1
+
+# recommended modern topology puts all clients on a shared subnet - like a
+# normal LAN. OpenVPN v2.7+ default - clients must be v2.0.9+.
+topology subnet
+# legacy topology hands every client its own /30 (4 addresses each). To revert
+# to default v2.6 and earlier behavior comment above line and uncomment below.
+#topology net30
+
+# uncomment and set DNS server IP - e.g. below uses Cloudflare (1.1.1.1).
+# Note by default OpenVPN pushes the server's configured nameserver.
+#push "dhcp-option DNS 1.1.1.1"
+
+# uncomment if all clients support TLSv1.3
+#tls-version-min 1.3
+
 EOF
