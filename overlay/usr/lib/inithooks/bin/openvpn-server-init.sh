@@ -50,7 +50,7 @@ KEY_NAME="${KEY_NAME:-openvpn}"
 KEY_COUNTRY="${KEY_COUNTRY:-US}"
 KEY_PROVINCE="${KEY_PROVINCE:-CA}"
 KEY_CITY="${KEY_CITY:-San Francisco}"
-KEY_SIZE="${KEY_SIZE:-2048}"
+KEY_SIZE="${KEY_SIZE:-3072}"
 KEY_EXPIRE="${KEY_EXPIRE:-3650}"
 CA_EXPIRE="${CA_EXPIRE:-3650}"
 
@@ -64,7 +64,7 @@ export EASYRSA_PKI="$EASYRSA/keys"
 export EASYRSA_CERT_EXPIRE="$KEY_EXPIRE"
 export EASYRSA_KEY_SIZE=$KEY_SIZE
 export EASYRSA_DN=cn_only
-export EASYRSA_REQ_COUNTRY="$KEY_COUNTRY"
+export EASYRSA_CA_EXPIRE="$CA_EXPIRE"
 export EASYRSA_REQ_ORG="$KEY_ORG"
 export EASYRSA_REQ_OU="$KEY_OU"
 export EASYRSA_REQ_NAME="$KEY_NAME"
@@ -102,7 +102,7 @@ mkdir -p "$SERVER_CCD"
 
 # generate ca and server keys/certs
 export EASYRSA_BATCH=1
-$EASYRSA/easyrsa init-pki soft-reset
+$EASYRSA/easyrsa init-pki
 $EASYRSA/easyrsa --req-cn='server' build-ca nopass
 $EASYRSA/easyrsa gen-req server nopass
 $EASYRSA/easyrsa sign-req server server
