@@ -2,7 +2,15 @@ turnkey-openvpn-19.0 (1) turnkey; urgency=low
 
   * Install OpenVPN from Debian repos - v2.6.14.
 
-  * Fix missing Cipher/Auth in server.conf - closes #2064.
+  * Fix (and updated deprecated) missing Cipher/Auth in server.conf - closes
+    #2064.
+
+  * Update/modernize other default OpenVPN config, including increased key
+    size. A future release will likely move to eliptic curve algorithm; e.g.
+    ecp384r1.
+
+  * Include IPv6 notes/docs in build code repo (openvpn/docs/ipv6.md). A
+    future TurnKey release will ship with them pre-enabled/pre-applied.
 
   * Upgraded base distribution to Debian 13.x/Trixie.
 
