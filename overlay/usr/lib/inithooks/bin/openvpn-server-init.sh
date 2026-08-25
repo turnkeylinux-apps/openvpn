@@ -157,6 +157,6 @@ verb 4
 # important: must not be used on your network
 server $(expand_cidr "$virtual_subnet")
 
-cipher AES-256-GCM
+data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305
 auth SHA512
 EOF
