@@ -103,7 +103,6 @@ mkdir -p "$SERVER_CCD"
 # generate ca and server keys/certs
 export EASYRSA_BATCH=1
 $EASYRSA/easyrsa init-pki soft-reset
-$EASYRSA/easyrsa gen-dh
 $EASYRSA/easyrsa --req-cn='server' build-ca nopass
 $EASYRSA/easyrsa gen-req server nopass
 $EASYRSA/easyrsa sign-req server server
@@ -142,7 +141,7 @@ chroot $EASYRSA_PKI/crl.jail
 crl-verify /etc/openvpn/crl.pem
 
 ca $EASYRSA_PKI/ca.crt
-dh $EASYRSA_PKI/dh.pem
+dh none
 tls-auth $EASYRSA_PKI/ta.key 0
 key $EASYRSA_PKI/private/server.key
 cert $EASYRSA_PKI/issued/server.crt
