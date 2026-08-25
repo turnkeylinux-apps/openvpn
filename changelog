@@ -9,6 +9,10 @@ turnkey-openvpn-19.0 (1) turnkey; urgency=low
     size. A future release will likely move to eliptic curve algorithm; e.g.
     ecp384r1.
 
+  * Move masquerade firewall config to systemd service rather than Webmin.
+    Allows separation of default/shared TurnKey firewall rules (disabled by
+    default as per all other apps) and OpenVPN specific conf.
+
   * Include IPv6 notes/docs in build code repo (openvpn/docs/ipv6.md). A
     future TurnKey release will ship with them pre-enabled/pre-applied.
 

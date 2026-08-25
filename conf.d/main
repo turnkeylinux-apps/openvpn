@@ -34,3 +34,6 @@ systemctl enable openvpn@server
 
 # enable openvpn-tun service (creates /dev/net/tun device in containers - closes #1011)
 systemctl enable openvpn-tun.service
+
+# enable masquerade firewall rule service for OpenVPN LAN reachback
+systemctl enable openvpn-masquerade.service
