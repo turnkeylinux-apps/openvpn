@@ -1,12 +1,21 @@
 #!/bin/bash -e
 # initialize openvpn easy-rsa, server keys and configuration
 
-. /etc/default/inithooks
+# shellcheck source=/dev/null
+source /etc/default/inithooks
 
-[ -e $INITHOOKS_CONF ] && . $INITHOOKS_CONF
+if [[ -e $INITHOOKS_CONF ]]; then
+   source "$INITHOOKS_CONF"
+fi
 
 # skip initialization if headless (will be configured by turnkey-init) 
-[ "$APP_DOMAIN" == "DEFAULT" ] && exit 0
+if [[ "$APP_DOMAIN" == "DEFAULT" ]]; then
+   exit 0
+fi
 
-$INITHOOKS_PATH/bin/openvpn.py --profile="$APP_PROFILE" --public-address="$APP_DOMAIN" --virtual-subnet="$APP_VIRTUAL_SUBNET" --private-subnet="$APP_PRIVATE_SUBNET" --key-email="$APP_EMAIL"
-
+"$INITHOOKS_PATH/bin/openvpn.py" \
+   --profile="$APP_PROFILE" \
+   --public-address="$APP_DOMAIN" \
+   --virtual-subnet="$APP_VIRTUAL_SUBNET" \
+   --private-subnet="$APP_PRIVATE_SUBNET" \
+   --key-email="$APP_EMAIL"

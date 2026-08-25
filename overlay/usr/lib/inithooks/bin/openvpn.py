@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Initialize OpenVPN easy-rsa, server keys and configuration
+"""Initialize OpenVPN easy-rsa, server keys and configuration.
 
 Options:
 
@@ -21,29 +21,38 @@ Gateway profile options:
 Note: options not specified but required by profile will be asked interactively
 """
 
+# ruff: noqa: C901, CPY001, D103, PLR0912, PLR0915, PTH110, PTH118, PTH120
 import getopt
-import os
 import subprocess
 import sys
-from os.path import exists
+from os.path import dirname, exists, join
 from random import randint as r
+from typing import NoReturn
 
 from libinithooks import info, inithooks_cache, is_interactive, warn
 from libinithooks.dialog_wrapper import Dialog
 
+TUN_CONTAINER_MSG = """\
+Failed to create `/dev/net/tun` device on boot.
 
-def fatal(e):
+If this server is an unprivileged container, you will need to create the tun \
+device on the host system."""
+
+
+def fatal(e: str) -> NoReturn:
     print("Error:", e, file=sys.stderr)
     sys.exit(1)
 
-def usage(e=None):
+
+def usage(e: str | getopt.GetoptError | None = None) -> None:
     if e:
         print("Error:", e, file=sys.stderr)
     print(f"Syntax: {sys.argv[0]} [options]", file=sys.stderr)
     print(__doc__, file=sys.stderr)
     sys.exit(1)
 
-def expand_cidr(cidr):
+
+def expand_cidr(cidr: str) -> str:
     network, bitcount = cidr.split("/")
     # turn /<bitcount> into a 32-long bit array
     bits = ("1" * int(bitcount)).ljust(32, "0")
@@ -57,11 +66,21 @@ def expand_cidr(cidr):
 
     return "{} {}.{}.{}.{}".format(network, *bytes_list)
 
-def main():
+
+def main() -> None:
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "h",
-            ["help", "profile=", "key-email=", "public-address=", "virtual-subnet=",
-             "private-subnet="])
+        opts, _args = getopt.gnu_getopt(
+            sys.argv[1:],
+            "h",
+            [
+                "help",
+                "profile=",
+                "key-email=",
+                "public-address=",
+                "virtual-subnet=",
+                "private-subnet=",
+            ],
+        )
     except getopt.GetoptError as e:
         usage(e)
 
@@ -89,27 +108,23 @@ def main():
     tun_exists = exists("/dev/net/tun")
     if not tun_exists:
         if is_interactive:
-            dialog.msgbox("Tun device not created", """
-Failed to create `/dev/net/tun` device on boot, this is expected when running inside a non-privileged container.
-
-If you are running on an unprivileged container, you will need to create this device on the host.""")
+            dialog.msgbox("Tun device not created", TUN_CONTAINER_MSG)
         else:
-            warn("Failed to create `/dev/net/tun` device on boot, this is expected when "
-                 "running inside a non-privileged container. If you are "
-                 "running on an unprivileged container, you will need to "
-                 "create this device on the host.")
+            warn(TUN_CONTAINER_MSG)
     else:
         info("/dev/net/tun created successfully")
 
     if not profile:
         profile = dialog.menu(
             "OpenVPN Profile",
-            "Choose a profile for this server.\n\n* Gateway: clients will be configured to route all\n  their traffic through the VPN.",
+            "Choose a profile for this server.\n\n"
+            "* Gateway: clients will route all traffic through the VPN.",
             [
                 ("server", "Accept VPN connections from clients"),
                 ("gateway", "Accept VPN connections from clients*"),
                 ("client", "Initiate VPN connections to a server"),
-            ])
+            ],
+        )
 
     if profile not in ("server", "gateway", "client"):
         fatal(f"invalid profile: {profile}")
@@ -121,7 +136,8 @@ If you are running on an unprivileged container, you will need to create this de
         key_email = dialog.get_email(
             "OpenVPN Email",
             "Enter email address for the OpenVPN server key.",
-            "admin@example.com")
+            "admin@example.com",
+        )
 
     inithooks_cache.write("APP_EMAIL", key_email)
 
@@ -129,42 +145,70 @@ If you are running on an unprivileged container, you will need to create this de
         public_address = dialog.get_input(
             "OpenVPN Public Address",
             "Enter FQDN or IP address of server reachable by clients",
-            "vpn.example.com")
+            "vpn.example.com",
+        )
 
-    auto_virtual_subnet = f"10.{r(2, 254)}.{r(2, 254)}.0/24"
+    # disable 'pseudo-random generator not suitable for crypto rule [S311]'
+    # pseudo-random generator only used for subnet generation
+    auto_virtual_subnet = f"10.{r(2, 254)}.{r(2, 254)}.0/24"  # noqa: S311
     if not virtual_subnet:
         virtual_subnet = dialog.get_input(
             "OpenVPN Virtual Subnet",
-            "Enter CIDR subnet address pool to allocate to clients. This server will be configured with x.x.x.1. The CIDR must not be in-use on your network.",
-            auto_virtual_subnet)
+            "Enter CIDR subnet address pool to allocate to clients. This"
+            " server will be configured with x.x.x.1. The CIDR must not be"
+            " in-use on your network.",
+            auto_virtual_subnet,
+        )
 
     if virtual_subnet.upper() == "AUTO":
         virtual_subnet = auto_virtual_subnet
 
-    if profile == "server":
-        if not private_subnet:
-            retcode, private_subnet = dialog.inputbox(
-                "OpenVPN Private Subnet",
-                "Enter CIDR subnet behind server for clients to reach.",
-                "10.0.1.0/24", "Apply", "Skip")
+    if profile == "server" and not private_subnet:
+        _retcode, private_subnet = dialog.inputbox(
+            "OpenVPN Private Subnet",
+            "Enter CIDR subnet behind server for clients to reach.",
+            "10.0.1.0/24",
+            "Apply",
+            "Skip",
+        )
 
     if private_subnet.upper() == "SKIP":
         private_subnet = ""
 
-    cmd = os.path.join(os.path.dirname(__file__), "openvpn-server-init.sh")
-    subprocess.run([cmd, key_email, public_address, virtual_subnet])
+    cmd = join(dirname(__file__), "openvpn-server-init.sh")
+    # subprocess command is safe in this case
+    subprocess.run(  # noqa: S603
+        [cmd, key_email, public_address, virtual_subnet], check=False,
+    )
 
     if profile == "gateway":
         with open("/etc/openvpn/server.conf", "a") as fob:
-            fob.write("# configure clients to route all their traffic through the vpn\n")
+            fob.write(
+                "# configure clients to route all their traffic through the"
+                " vpn\n",
+            )
             fob.write('push "redirect-gateway def1 bypass-dhcp"\n\n')
 
     if private_subnet:
         with open("/etc/openvpn/server.conf", "a") as fob:
-            fob.write("# push routes to clients to allow them to reach private subnets\n")
-            fob.writelines(f'push "route {expand_cidr(_private_subnet)}"\n' for _private_subnet in private_subnet.split(","))
-    subprocess.run(["systemctl", "start", "openvpn@server"])
+            fob.write(
+                "# push routes to clients to allow them to reach private"
+                " subnets\n",
+            )
+            fob.writelines(
+                (
+                    f'push "route {expand_cidr(_private_subnet)}"\n'
+                    for _private_subnet in private_subnet.split(",")
+                ),
+            )
+    subprocess.run(
+        ["/usr/bin/systemctl", "restart", "openvpn@server"], check=False,
+    )
+    subprocess.run(
+        ["/usr/bin/systemctl", "restart", "openvpn-masquerade.service"],
+        check=False,
+    )
+
 
 if __name__ == "__main__":
     main()
-
