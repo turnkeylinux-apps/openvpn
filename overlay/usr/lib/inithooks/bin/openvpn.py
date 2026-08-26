@@ -164,7 +164,7 @@ def main() -> None:
         virtual_subnet = auto_virtual_subnet
 
     if profile == "server" and not private_subnet:
-        _retcode, private_subnet = dialog.inputbox(
+        retcode, private_subnet = dialog.inputbox(
             "OpenVPN Private Subnet",
             "Enter CIDR subnet behind server for clients to reach.",
             "10.0.1.0/24",
@@ -172,7 +172,8 @@ def main() -> None:
             "Skip",
         )
 
-    if private_subnet.upper() == "SKIP":
+    # retcode is one of 'ok' ("Apply") or 'cancel' ("Skip")
+    if retcode == "cancel":
         private_subnet = ""
 
     cmd = join(dirname(__file__), "openvpn-server-init.sh")
@@ -203,10 +204,6 @@ def main() -> None:
             )
     subprocess.run(
         ["/usr/bin/systemctl", "restart", "openvpn@server"], check=False,
-    )
-    subprocess.run(
-        ["/usr/bin/systemctl", "restart", "openvpn-masquerade.service"],
-        check=False,
     )
 
 
