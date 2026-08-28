@@ -16,6 +16,17 @@ turnkey-openvpn-19.0 (1) turnkey; urgency=low
   * Include IPv6 notes/docs in build code repo (openvpn/docs/ipv6.md). A
     future TurnKey release will ship with them pre-enabled/pre-applied.
 
+  * Validate firstboot network/address inputs, fail on initializer/service
+    errors, protect generated client profiles/private keys and reject unsafe
+    client names.
+
+  * Discover the active default-route interface for idempotent VPN masquerade
+    rules rather than assuming the interface is named eth0.
+
+  * Add focused v19 configured-root/runtime acceptance covering certificate
+    authentication, a real gateway tunnel data path, restart persistence and
+    the signed Debian updater channel.
+
   * Upgraded base distribution to Debian 13.x/Trixie.
 
   * Replace TurnKey custom Debian-Installer based 'di-live' with new custom
@@ -408,4 +419,3 @@ turnkey-openvpn-13.0 (1) turnkey; urgency=low
     appliances. Here we only describe changes specific to this appliance.
 
  -- Alon Swartz <alon@turnkeylinux.org>  Wed, 28 Aug 2013 17:58:06 +0300
-
