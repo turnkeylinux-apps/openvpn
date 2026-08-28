@@ -3,6 +3,8 @@ set -Eeuo pipefail
 umask 077
 
 state_file=/run/openvpn-masquerade.interface
+server_config=/etc/openvpn/server.conf
+rule_comment=turnkey-openvpn
 
 fatal() {
     echo "FATAL [$(basename "$0")]: $*" >&2
@@ -25,34 +27,50 @@ validate_interface() {
     local interface=$1
     [[ $interface =~ ^[A-Za-z0-9_.:-]+$ ]] ||
         fatal "invalid default-route interface"
-    [[ -e /sys/class/net/$interface ]] ||
-        fatal "default-route interface does not exist: $interface"
 }
 
 start_rule() {
-    local interface
+    local interface network netmask source_subnet
+    if [[ ! -s $server_config ]]; then
+        rm -f -- "$state_file"
+        return 0
+    fi
     interface=$(default_interface)
     [[ -n $interface ]] || fatal "no IPv4 default-route interface found"
     validate_interface "$interface"
+    [[ -e /sys/class/net/$interface ]] ||
+        fatal "default-route interface does not exist: $interface"
+    read -r network netmask < <(
+        awk '$1 == "server" && NF == 3 {print $2, $3; exit}' "$server_config"
+    )
+    [[ -n ${network:-} && -n ${netmask:-} ]] ||
+        fatal "no server subnet found in $server_config"
+    source_subnet="$network/$netmask"
 
     if ! /usr/sbin/iptables -t nat -C POSTROUTING \
-            -o "$interface" -j MASQUERADE 2>/dev/null; then
+            -s "$source_subnet" -o "$interface" -m comment \
+            --comment "$rule_comment" -j MASQUERADE 2>/dev/null; then
         /usr/sbin/iptables -t nat -A POSTROUTING \
-            -o "$interface" -j MASQUERADE
+            -s "$source_subnet" -o "$interface" -m comment \
+            --comment "$rule_comment" -j MASQUERADE
     fi
-    printf '%s\n' "$interface" >"$state_file"
+    printf '%s %s\n' "$interface" "$source_subnet" >"$state_file"
 }
 
 stop_rule() {
-    local interface
+    local interface source_subnet
     [[ -r $state_file ]] || return 0
-    IFS= read -r interface <"$state_file"
+    read -r interface source_subnet <"$state_file"
     validate_interface "$interface"
+    [[ $source_subnet =~ ^[0-9.]+/[0-9.]+$ ]] ||
+        fatal "invalid source subnet in $state_file"
 
     if /usr/sbin/iptables -t nat -C POSTROUTING \
-            -o "$interface" -j MASQUERADE 2>/dev/null; then
+            -s "$source_subnet" -o "$interface" -m comment \
+            --comment "$rule_comment" -j MASQUERADE 2>/dev/null; then
         /usr/sbin/iptables -t nat -D POSTROUTING \
-            -o "$interface" -j MASQUERADE
+            -s "$source_subnet" -o "$interface" -m comment \
+            --comment "$rule_comment" -j MASQUERADE
     fi
     rm -f -- "$state_file"
 }
