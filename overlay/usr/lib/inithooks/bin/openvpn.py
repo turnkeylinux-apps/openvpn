@@ -23,6 +23,8 @@ Note: options not specified but required by profile will be asked interactively
 
 # ruff: noqa: C901, CPY001, D103, PLR0912, PLR0915, PTH110, PTH118, PTH120
 import getopt
+import ipaddress
+import re
 import subprocess
 import sys
 from os.path import dirname, exists, join
@@ -38,6 +40,14 @@ Failed to create `/dev/net/tun` device on boot.
 If this server is an unprivileged container, you will need to create the tun \
 device on the host system."""
 
+EMAIL_RE = re.compile(
+    r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?"
+)
+HOSTNAME_RE = re.compile(
+    r"(?=.{1,253}\Z)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*"
+    r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+)
+
 
 def fatal(e: str) -> NoReturn:
     print("Error:", e, file=sys.stderr)
@@ -52,19 +62,41 @@ def usage(e: str | getopt.GetoptError | None = None) -> None:
     sys.exit(1)
 
 
-def expand_cidr(cidr: str) -> str:
-    network, bitcount = cidr.split("/")
-    # turn /<bitcount> into a 32-long bit array
-    bits = ("1" * int(bitcount)).ljust(32, "0")
-    # split the bit array into 4 bytes
-    bytes_list = [
-        int(bits[0:8], 2),
-        int(bits[8:16], 2),
-        int(bits[16:24], 2),
-        int(bits[24:32], 2),
-    ]
+def validate_email(value: str) -> str:
+    if len(value) > 254 or not EMAIL_RE.fullmatch(value):
+        fatal("invalid key email address")
+    return value
 
-    return "{} {}.{}.{}.{}".format(network, *bytes_list)
+
+def validate_public_address(value: str) -> str:
+    try:
+        return str(ipaddress.ip_address(value))
+    except ValueError:
+        if not HOSTNAME_RE.fullmatch(value):
+            fatal("public address must be an IP address or DNS hostname")
+    return value.lower()
+
+
+def validate_subnet(value: str, label: str) -> str:
+    try:
+        network = ipaddress.ip_network(value, strict=True)
+    except ValueError:
+        fatal(f"invalid {label}: {value!r}")
+    if network.version != 4:
+        fatal(f"{label} must be an IPv4 network")
+    return network.with_prefixlen
+
+
+def expand_cidr(cidr: str) -> str:
+    network = ipaddress.IPv4Network(cidr, strict=True)
+    return f"{network.network_address} {network.netmask}"
+
+
+def run_checked(command: list[str], description: str) -> None:
+    try:
+        subprocess.run(command, check=True)  # noqa: S603
+    except (OSError, subprocess.CalledProcessError) as error:
+        fatal(f"{description} failed: {error}")
 
 
 def main() -> None:
@@ -139,8 +171,6 @@ def main() -> None:
             "admin@example.com",
         )
 
-    inithooks_cache.write("APP_EMAIL", key_email)
-
     if not public_address:
         public_address = dialog.get_input(
             "OpenVPN Public Address",
@@ -172,14 +202,27 @@ def main() -> None:
             "Skip",
         )
 
-    # retcode is one of 'ok' ("Apply") or 'cancel' ("Skip")
-    if retcode == "cancel":
+        # retcode is one of 'ok' ("Apply") or 'cancel' ("Skip")
+        if retcode == "cancel":
+            private_subnet = ""
+
+    if private_subnet.upper() == "SKIP":
         private_subnet = ""
 
+    key_email = validate_email(key_email)
+    public_address = validate_public_address(public_address)
+    virtual_subnet = validate_subnet(virtual_subnet, "virtual subnet")
+    private_subnets = [
+        validate_subnet(item.strip(), "private subnet")
+        for item in private_subnet.split(",")
+        if item.strip()
+    ]
+    inithooks_cache.write("APP_EMAIL", key_email)
+
     cmd = join(dirname(__file__), "openvpn-server-init.sh")
-    # subprocess command is safe in this case
-    subprocess.run(  # noqa: S603
-        [cmd, key_email, public_address, virtual_subnet], check=False,
+    run_checked(
+        [cmd, key_email, public_address, virtual_subnet],
+        "OpenVPN server initialization",
     )
 
     if profile == "gateway":
@@ -190,7 +233,7 @@ def main() -> None:
             )
             fob.write('push "redirect-gateway def1 bypass-dhcp"\n\n')
 
-    if private_subnet:
+    if private_subnets:
         with open("/etc/openvpn/server.conf", "a") as fob:
             fob.write(
                 "# push routes to clients to allow them to reach private"
@@ -198,12 +241,13 @@ def main() -> None:
             )
             fob.writelines(
                 (
-                    f'push "route {expand_cidr(_private_subnet)}"\n'
-                    for _private_subnet in private_subnet.split(",")
+                    f'push "route {expand_cidr(subnet)}"\n'
+                    for subnet in private_subnets
                 ),
             )
-    subprocess.run(
-        ["/usr/bin/systemctl", "restart", "openvpn@server"], check=False,
+    run_checked(
+        ["/usr/bin/systemctl", "restart", "openvpn@server"],
+        "OpenVPN service restart",
     )
 
 

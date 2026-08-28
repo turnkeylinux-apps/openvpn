@@ -5,9 +5,15 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-ExecStop=/sbin/iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+ExecStart=/usr/local/sbin/openvpn-masquerade start
+ExecStop=/usr/local/sbin/openvpn-masquerade stop
 RemainAfterExit=yes
+CapabilityBoundingSet=CAP_NET_ADMIN
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/run
 
 [Install]
 WantedBy=multi-user.target
