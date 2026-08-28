@@ -246,8 +246,13 @@ def main() -> None:
                 ),
             )
     run_checked(
-        ["/usr/bin/systemctl", "restart", "openvpn@server"],
-        "OpenVPN service restart",
+        [
+            "/usr/bin/systemctl",
+            "restart",
+            "openvpn@server",
+            "openvpn-masquerade",
+        ],
+        "OpenVPN services restart",
     )
 
 
