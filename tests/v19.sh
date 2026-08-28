@@ -49,6 +49,18 @@ wait_for_client_tunnel() {
     return 1
 }
 
+count_nat_rules() {
+    local interface=$1
+
+    iptables-save -t nat | awk -v interface="$interface" '
+        index($0, "-o " interface " ") &&
+                $0 ~ /--comment "?turnkey-openvpn"?([[:space:]]|$)/ {
+            count += 1
+        }
+        END { print count + 0 }
+    '
+}
+
 systemctl --quiet is-active openvpn@server.service \
     openvpn-masquerade.service lighttpd.service multi-user.target
 systemctl --quiet is-enabled openvpn@server.service \
@@ -107,9 +119,7 @@ test "$recorded_source" = "$vpn_network/$vpn_netmask"
 iptables -t nat -C POSTROUTING -s "$recorded_source" \
     -o "$default_interface" -m comment --comment turnkey-openvpn \
     -j MASQUERADE
-test "$(iptables-save -t nat |
-    grep -F -- "-o $default_interface" |
-    grep -F -- '--comment "turnkey-openvpn"' | wc -l)" = 1
+test "$(count_nat_rules "$default_interface")" = 1
 
 openvpn-addclient "$client_name" client@example.invalid
 client_created=true
@@ -206,9 +216,7 @@ read -r recorded_interface recorded_source \
     </run/openvpn-masquerade.interface
 test "$recorded_interface" = "$default_interface"
 test "$recorded_source" = "$vpn_network/$vpn_netmask"
-test "$(iptables-save -t nat |
-    grep -F -- "-o $default_interface" |
-    grep -F -- '--comment "turnkey-openvpn"' | wc -l)" = 1
+test "$(count_nat_rules "$default_interface")" = 1
 ip netns exec "$namespace" curl --insecure --fail --location --silent \
     --show-error --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip/" >"$response"
