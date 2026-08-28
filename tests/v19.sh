@@ -66,6 +66,9 @@ systemctl --quiet is-active openvpn@server.service \
     openvpn-masquerade.service lighttpd.service multi-user.target
 systemctl --quiet is-enabled openvpn@server.service \
     openvpn-masquerade.service
+lighttpd -tt -f /etc/lighttpd/lighttpd.conf
+grep -Fq '$SERVER["socket"] == "0.0.0.0:443"' \
+    /etc/lighttpd/conf-enabled/50-tklcp.conf
 grep -q '\[40openvpn\].*successfully completed' /var/log/inithooks.log
 test -c /dev/net/tun
 test -s /etc/openvpn/server.conf
