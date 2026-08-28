@@ -116,7 +116,8 @@ EOF
 cat > "$SERVER_CCD/$client_name" <<EOF
 iroute $(expand_cidr "$private_subnet")
 EOF
-chmod 644 "$SERVER_CCD/$client_name"
+chown root:nogroup "$SERVER_CCD/$client_name"
+chmod 640 "$SERVER_CCD/$client_name"
 warn "openvpn needs to be restarted for changes to take effect."
 fi
 
