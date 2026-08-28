@@ -66,7 +66,17 @@ Credentials *(passwords set at first boot)*
 
 -  Webmin, SSH: username **root**
 
+Updates and v19 validation
+--------------------------
+
+OpenVPN Community Edition, Easy-RSA and iptables are installed and updated
+from Debian 13 Trixie's signed repositories. The appliance adds no third-party
+application package source. The focused v19 build, firstboot, authenticated
+tunnel, gateway data-path, restart and nonmutating updater checks are mapped in
+`the v19 testing notes`_.
+
 .. _OpenVPN®: https://openvpn.net
 .. _TurnKey Core: https://www.turnkeylinux.org/core
 .. _Usage documentation: https://github.com/turnkeylinux-apps/openvpn/tree/master/docs
+.. _the v19 testing notes: docs/v19.0-testing.md
 .. _this: https://www.turnkeylinux.org/blog/configuring-timezone
