@@ -1,4 +1,6 @@
-#!/bin/bash -eu
+#!/bin/bash
+set -Eeuo pipefail
+umask 077
 
 fatal() { echo "FATAL: $*" >&2; exit 1; }
 warn() { echo "WARN: $*"; }
@@ -47,6 +49,11 @@ client_name="$1"
 client_email="$2"
 shift 2
 
+[[ ${#client_name} -le 64 && $client_name =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] ||
+    fatal "client-name may contain only letters, numbers, dot, underscore and dash"
+[[ ${#client_email} -le 254 && $client_email =~ ^[[:alnum:]._%+-]+@[[:alnum:].-]+$ ]] ||
+    fatal "invalid client email address"
+
 password='nopass'
 auth_nocache=
 private_subnet=
@@ -59,12 +66,15 @@ for item in "$@"; do
         --auth-nocache)
             auth_nocache="auth-nocache"
             ;;
-        --port*)
-            REMOTE_PORT="$(echo "$item" | awk -F= '{print $2}')"
+        --port=*)
+            REMOTE_PORT="${item#--port=}"
+            ;;
+        --*)
+            usage
             ;;
         *)
             if [[ -z "$private_subnet" ]]; then
-                private_subnet="$1"
+                private_subnet="$item"
             else
                 usage
             fi
@@ -72,6 +82,13 @@ for item in "$@"; do
     esac
     shift
 done
+
+[[ $REMOTE_PORT =~ ^[0-9]+$ ]] &&
+    ((REMOTE_PORT >= 1 && REMOTE_PORT <= 65535)) ||
+    fatal "port must be between 1 and 65535"
+if [[ -n $private_subnet ]]; then
+    expand_cidr "$private_subnet" >/dev/null || fatal "invalid private subnet"
+fi
 
 SERVER_CFG='/etc/openvpn/server.conf'
 SERVER_CCD='/etc/openvpn/server.ccd'
@@ -83,6 +100,8 @@ mkdir -p "$EASYRSA_PKI"
 
 SERVER_ADDR="$(grep PUBLIC_ADDRESS "$SERVER_CFG" | awk '{print $3}')"
 [[ -n "$SERVER_ADDR" ]] || fatal "unable to determine PUBLIC_ADDRESS from $SERVER_CFG"
+[[ ${#SERVER_ADDR} -le 253 && $SERVER_ADDR =~ ^[[:alnum:]][[:alnum:].:-]*$ ]] ||
+    fatal "invalid PUBLIC_ADDRESS in $SERVER_CFG"
 [[ -e "$EASYRSA_PKI/$client_name.ovpn" ]] && fatal "$EASYRSA_PKI/$client_name.ovpn exists"
 
 EASYRSA_REQ_EMAIL="$client_email" "$EASYRSA/easyrsa" --batch build-client-full "$client_name" "$password"
@@ -97,6 +116,7 @@ EOF
 cat > "$SERVER_CCD/$client_name" <<EOF
 iroute $(expand_cidr "$private_subnet")
 EOF
+chmod 644 "$SERVER_CCD/$client_name"
 warn "openvpn needs to be restarted for changes to take effect."
 fi
 
@@ -107,7 +127,7 @@ proto udp
 remote-cert-tls server
 $auth_nocache
 
-cipher AES-256-GCM
+data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305
 auth SHA512
 
 tls-client
@@ -138,6 +158,8 @@ $(cat "$EASYRSA_PKI/private/$client_name.key")
 </key>
 EOF
 
+chmod 600 "$EASYRSA_PKI/$client_name.ovpn" \
+    "$EASYRSA_PKI/private/$client_name.key"
+
 echo
 info "generated $EASYRSA_PKI/$client_name.ovpn"
-

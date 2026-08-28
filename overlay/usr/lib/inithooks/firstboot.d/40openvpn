@@ -13,6 +13,15 @@ if [[ "$APP_DOMAIN" == "DEFAULT" ]]; then
    exit 0
 fi
 
+# Automated firstboot supplies the generic domain/email fields but older
+# callers may omit OpenVPN-specific values. Preserve interactive prompting and
+# provide deterministic gateway defaults only for the unattended path.
+if [[ ${AUTO_RUN,,} == true ]]; then
+   APP_PROFILE=${APP_PROFILE:-gateway}
+   APP_VIRTUAL_SUBNET=${APP_VIRTUAL_SUBNET:-AUTO}
+   APP_PRIVATE_SUBNET=${APP_PRIVATE_SUBNET:-SKIP}
+fi
+
 "$INITHOOKS_PATH/bin/openvpn.py" \
    --profile="$APP_PROFILE" \
    --public-address="$APP_DOMAIN" \

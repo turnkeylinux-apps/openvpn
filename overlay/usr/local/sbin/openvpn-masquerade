@@ -1,0 +1,64 @@
+#!/bin/bash
+set -Eeuo pipefail
+umask 077
+
+state_file=/run/openvpn-masquerade.interface
+
+fatal() {
+    echo "FATAL [$(basename "$0")]: $*" >&2
+    exit 1
+}
+
+default_interface() {
+    /usr/sbin/ip -4 route show default |
+        awk '$1 == "default" {
+            for (field = 1; field <= NF; field++) {
+                if ($field == "dev" && field < NF) {
+                    print $(field + 1)
+                    exit
+                }
+            }
+        }'
+}
+
+validate_interface() {
+    local interface=$1
+    [[ $interface =~ ^[A-Za-z0-9_.:-]+$ ]] ||
+        fatal "invalid default-route interface"
+    [[ -e /sys/class/net/$interface ]] ||
+        fatal "default-route interface does not exist: $interface"
+}
+
+start_rule() {
+    local interface
+    interface=$(default_interface)
+    [[ -n $interface ]] || fatal "no IPv4 default-route interface found"
+    validate_interface "$interface"
+
+    if ! /usr/sbin/iptables -t nat -C POSTROUTING \
+            -o "$interface" -j MASQUERADE 2>/dev/null; then
+        /usr/sbin/iptables -t nat -A POSTROUTING \
+            -o "$interface" -j MASQUERADE
+    fi
+    printf '%s\n' "$interface" >"$state_file"
+}
+
+stop_rule() {
+    local interface
+    [[ -r $state_file ]] || return 0
+    IFS= read -r interface <"$state_file"
+    validate_interface "$interface"
+
+    if /usr/sbin/iptables -t nat -C POSTROUTING \
+            -o "$interface" -j MASQUERADE 2>/dev/null; then
+        /usr/sbin/iptables -t nat -D POSTROUTING \
+            -o "$interface" -j MASQUERADE
+    fi
+    rm -f -- "$state_file"
+}
+
+case ${1:-} in
+    start) start_rule ;;
+    stop) stop_rule ;;
+    *) fatal "usage: $0 {start|stop}" ;;
+esac
