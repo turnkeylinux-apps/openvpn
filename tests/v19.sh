@@ -12,6 +12,7 @@ client_log=/run/tkl-openvpn-client.$$.log
 client_pid=/run/tkl-openvpn-client.$$.pid
 response=/run/tkl-openvpn-response.$$
 policy=/run/tkl-openvpn-policy.$$
+published_profile=
 client_created=false
 
 cleanup() {
@@ -93,10 +94,20 @@ default_interface=$(
         }'
 )
 test -n "$default_interface"
-test "$(cat /run/openvpn-masquerade.interface)" = "$default_interface"
-iptables -t nat -C POSTROUTING -o "$default_interface" -j MASQUERADE
-test "$(iptables-save -t nat | grep -Fxc \
-    -- "-A POSTROUTING -o $default_interface -j MASQUERADE")" = 1
+read -r recorded_interface recorded_source \
+    </run/openvpn-masquerade.interface
+read -r vpn_network vpn_netmask < <(
+    awk '$1 == "server" && NF == 3 {print $2, $3; exit}' \
+        /etc/openvpn/server.conf
+)
+test "$recorded_interface" = "$default_interface"
+test "$recorded_source" = "$vpn_network/$vpn_netmask"
+iptables -t nat -C POSTROUTING -s "$recorded_source" \
+    -o "$default_interface" -m comment --comment turnkey-openvpn \
+    -j MASQUERADE
+test "$(iptables-save -t nat |
+    grep -F -- "-o $default_interface" |
+    grep -F -- '--comment "turnkey-openvpn"' | wc -l)" = 1
 
 openvpn-addclient "$client_name" client@example.invalid
 client_created=true
@@ -112,6 +123,18 @@ if openvpn-addclient '../invalid' client@example.invalid >/dev/null 2>&1; then
     echo "path-bearing client name was accepted" >&2
     exit 1
 fi
+if /var/www/openvpn/bin/addprofile '../invalid' >/dev/null 2>&1; then
+    echo "path-bearing published-profile name was accepted" >&2
+    exit 1
+fi
+download_url=$(/var/www/openvpn/bin/addprofile "$client_name")
+[[ $download_url =~ ^https://localhost/profiles/[a-f0-9]{48}/$ ]]
+profile_path=${download_url#https://localhost}
+published_profile=/var/www/openvpn/htdocs${profile_path%/}
+profile_token=${profile_path%/}
+profile_token=${profile_token##*/}
+test "$(stat -c %a "$published_profile")" = 750
+test "$(stat -c %a "$published_profile/$client_name.ovpn")" = 440
 
 ip netns add "$namespace"
 ip link add "$host_veth" type veth peer name "$client_veth"
@@ -139,6 +162,26 @@ ip netns exec "$namespace" curl --insecure --fail --location --silent \
     --show-error --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip/" >"$response"
 grep -q 'TurnKey OpenVPN' "$response"
+ip netns exec "$namespace" curl --insecure --fail --silent --show-error \
+    --header 'Host: localhost' --interface tun0 --max-time 20 \
+    "https://$server_tunnel_ip$profile_path" >"$response"
+grep -Fq "$client_name.ovpn" "$response"
+ip netns exec "$namespace" curl --insecure --fail --silent --show-error \
+    --header 'Host: localhost' --interface tun0 --max-time 20 \
+    "https://$server_tunnel_ip$profile_path$client_name.ovpn" >"$response"
+cmp "$response" "$source_profile"
+for _attempt in {1..10}; do
+    if grep -Fq "/profiles/$profile_token/$client_name.ovpn" \
+            /var/www/openvpn/logs/access.log; then
+        break
+    fi
+    sleep 1
+done
+grep -Fq "/profiles/$profile_token/$client_name.ovpn" \
+    /var/www/openvpn/logs/access.log
+su www-data -s /bin/bash -c /var/www/openvpn/bin/delexpired
+test ! -e "$published_profile"
+published_profile=
 
 # The gateway profile must carry a real HTTPS request through the tunnel and
 # the appliance's default-route masquerade rule, not merely create tun0.
@@ -157,9 +200,13 @@ systemctl restart openvpn@server.service openvpn-masquerade.service
 wait_for_client_tunnel
 systemctl --quiet is-active openvpn@server.service \
     openvpn-masquerade.service
-test "$(cat /run/openvpn-masquerade.interface)" = "$default_interface"
-test "$(iptables-save -t nat | grep -Fxc \
-    -- "-A POSTROUTING -o $default_interface -j MASQUERADE")" = 1
+read -r recorded_interface recorded_source \
+    </run/openvpn-masquerade.interface
+test "$recorded_interface" = "$default_interface"
+test "$recorded_source" = "$vpn_network/$vpn_netmask"
+test "$(iptables-save -t nat |
+    grep -F -- "-o $default_interface" |
+    grep -F -- '--comment "turnkey-openvpn"' | wc -l)" = 1
 ip netns exec "$namespace" curl --insecure --fail --location --silent \
     --show-error --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip/" >"$response"
@@ -201,7 +248,7 @@ fi
 cat >"$result" <<EOF
 package_source=Debian 13 Trixie APT repositories for OpenVPN, Easy-RSA and iptables; TurnKey APT for the inherited Core and Webmin components
 installed_version=openvpn $openvpn_version; easy-rsa $easy_rsa_version; iptables $iptables_version
-runtime_checks=normal init and firstboot; PKI and certificate-authenticated disposable client; real tun data transfer and gateway HTTPS egress; dynamic default-interface NAT; least-privileged client key files; rejected config and path injection; client revocation; OpenVPN and NAT restart persistence; Lighttpd landing page
+runtime_checks=normal init and firstboot; PKI and certificate-authenticated disposable client; real tun data transfer and gateway HTTPS egress; dynamic subnet-scoped default-interface NAT; least-privileged client key files; rejected config and path injection; random HTTPS profile publication and expiry; client revocation; OpenVPN and NAT restart persistence; Lighttpd landing page
 updater_command=apt-get update; apt-cache policy openvpn easy-rsa iptables
 updater_result=signed metadata refreshed; eligible candidates found; installed versions unchanged
 updater_channel=Debian Trixie and TurnKey Trixie APT repositories
