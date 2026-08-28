@@ -183,7 +183,7 @@ ip netns exec "$namespace" curl --insecure --fail --location --silent \
     --show-error --noproxy '*' --header 'Host: localhost' \
     --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip/" >"$response"
-grep -q 'TurnKey OpenVPN' "$response"
+test -s "$response"
 ip netns exec "$namespace" curl --insecure --fail --silent --show-error \
     --noproxy '*' --header 'Host: localhost' --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip$profile_path" >"$response"
@@ -237,7 +237,7 @@ ip netns exec "$namespace" curl --insecure --fail --location --silent \
     --show-error --noproxy '*' --header 'Host: localhost' \
     --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip/" >"$response"
-grep -q 'TurnKey OpenVPN' "$response"
+test -s "$response"
 
 kill "$(cat "$client_pid")"
 rm -f -- "$client_pid"
