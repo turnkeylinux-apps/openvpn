@@ -30,6 +30,8 @@ shift
 
 export EASYRSA='/etc/openvpn/easy-rsa'
 export EASYRSA_PKI="$EASYRSA/keys"
+SERVER_CFG='/etc/openvpn/server.conf'
+SERVER_CCD='/etc/openvpn/server.ccd'
 
 "$EASYRSA/easyrsa" --batch revoke "$client_name"
 "$EASYRSA/easyrsa" gen-crl
@@ -37,5 +39,8 @@ cp "$EASYRSA_PKI/crl.pem" "$EASYRSA_PKI/crl.jail/etc/openvpn"
 chown nobody:nogroup "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
 chmod +r "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
 
-rm "$EASYRSA_PKI/$client_name.ovpn"
+escaped_client_name=${client_name//./\\.}
+sed -i "\\|^# subnet behind a client: $escaped_client_name$|,+2d" \
+    "$SERVER_CFG"
+rm -f "$EASYRSA_PKI/$client_name.ovpn" "$SERVER_CCD/$client_name"
 info "revoked $EASYRSA_PKI/$client_name.ovpn"

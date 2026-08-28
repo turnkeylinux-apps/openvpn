@@ -14,6 +14,7 @@ client_log=/run/tkl-openvpn-client.$$.log
 client_pid=/run/tkl-openvpn-client.$$.pid
 response=/run/tkl-openvpn-response.$$
 policy=/run/tkl-openvpn-policy.$$
+private_subnet=198.51.100.0/24
 published_profile=
 client_created=false
 
@@ -121,11 +122,15 @@ iptables -t nat -C POSTROUTING -s "$recorded_source" \
     -j MASQUERADE
 test "$(count_nat_rules "$default_interface")" = 1
 
-openvpn-addclient "$client_name" client@example.invalid
+openvpn-addclient "$client_name" client@example.invalid "$private_subnet"
 client_created=true
 source_profile=/etc/openvpn/easy-rsa/keys/$client_name.ovpn
+ccd_file=/etc/openvpn/server.ccd/$client_name
 test "$(stat -c %a "$source_profile")" = 600
 test "$(stat -c %a "/etc/openvpn/easy-rsa/keys/private/$client_name.key")" = 600
+test "$(stat -Lc %a:%U:%G /etc/openvpn/server.ccd)" = 750:root:nogroup
+test "$(stat -c %a:%U:%G "$ccd_file")" = 640:root:nogroup
+grep -Fxq 'iroute 198.51.100.0 255.255.255.0' "$ccd_file"
 if find /etc/openvpn/easy-rsa/keys/private -type f -perm /077 -print -quit |
         grep -q .; then
     echo "private key material is group/world accessible" >&2
@@ -147,6 +152,8 @@ profile_token=${profile_path%/}
 profile_token=${profile_token##*/}
 test "$(stat -c %a "$published_profile")" = 750
 test "$(stat -c %a "$published_profile/$client_name.ovpn")" = 440
+systemctl restart openvpn@server.service
+systemctl --quiet is-active openvpn@server.service
 
 ip netns add "$namespace"
 ip link add "$host_veth" type veth peer name "$client_veth"
@@ -171,17 +178,24 @@ server_tunnel_ip=$(ip -4 -o address show dev tun0 |
     awk 'NR == 1 {sub(/\/.*/, "", $4); print $4}')
 test -n "$server_tunnel_ip"
 ip netns exec "$namespace" curl --insecure --fail --location --silent \
-    --show-error --interface tun0 --max-time 20 \
+    --show-error --noproxy '*' --header 'Host: localhost' \
+    --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip/" >"$response"
 grep -q 'TurnKey OpenVPN' "$response"
 ip netns exec "$namespace" curl --insecure --fail --silent --show-error \
-    --header 'Host: localhost' --interface tun0 --max-time 20 \
+    --noproxy '*' --header 'Host: localhost' --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip$profile_path" >"$response"
 grep -Fq "$client_name.ovpn" "$response"
 ip netns exec "$namespace" curl --insecure --fail --silent --show-error \
-    --header 'Host: localhost' --interface tun0 --max-time 20 \
+    --noproxy '*' --header 'Host: localhost' --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip$profile_path$client_name.ovpn" >"$response"
 cmp "$response" "$source_profile"
+ip -4 route show exact "$private_subnet" | grep -Eq 'dev tun[0-9]+'
+if journalctl -u openvpn@server.service -b --no-pager |
+        grep -Fq "Could not access file '$ccd_file'"; then
+    echo "OpenVPN could not read the client-config file" >&2
+    exit 1
+fi
 for _attempt in {1..10}; do
     if grep -Fq "/profiles/$profile_token/$client_name.ovpn" \
             /var/www/openvpn/logs/access.log; then
@@ -203,7 +217,7 @@ test -n "$debian_ip"
 ip netns exec "$namespace" ip -4 route get "$debian_ip" |
     grep -Eq 'dev tun[0-9]+'
 ip netns exec "$namespace" curl --fail --silent --show-error \
-    --interface tun0 --max-time 30 \
+    --noproxy '*' --interface tun0 --max-time 30 \
     --resolve "deb.debian.org:443:$debian_ip" \
     https://deb.debian.org/debian/README >"$response"
 test -s "$response"
@@ -218,7 +232,8 @@ test "$recorded_interface" = "$default_interface"
 test "$recorded_source" = "$vpn_network/$vpn_netmask"
 test "$(count_nat_rules "$default_interface")" = 1
 ip netns exec "$namespace" curl --insecure --fail --location --silent \
-    --show-error --interface tun0 --max-time 20 \
+    --show-error --noproxy '*' --header 'Host: localhost' \
+    --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip/" >"$response"
 grep -q 'TurnKey OpenVPN' "$response"
 
@@ -228,6 +243,12 @@ ip netns delete "$namespace"
 openvpn-removeclient "$client_name" >/dev/null
 client_created=false
 test ! -e "$source_profile"
+test ! -e "$ccd_file"
+if grep -Fq "# subnet behind a client: $client_name" \
+        /etc/openvpn/server.conf; then
+    echo "revoked client route remained in the server configuration" >&2
+    exit 1
+fi
 grep -Fq "$client_name" /etc/openvpn/easy-rsa/keys/index.txt
 grep -Eq "^R.*CN=$client_name$" /etc/openvpn/easy-rsa/keys/index.txt
 systemctl restart openvpn@server.service
