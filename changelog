@@ -20,8 +20,12 @@ turnkey-openvpn-19.0 (1) turnkey; urgency=low
     errors, protect generated client profiles/private keys and reject unsafe
     client names.
 
-  * Discover the active default-route interface for idempotent VPN masquerade
-    rules rather than assuming the interface is named eth0.
+  * Discover the active default-route interface for an idempotent,
+    VPN-subnet-scoped masquerade rule rather than assuming the interface is
+    named eth0.
+
+  * Harden the expiring profile-download helper with validated client names,
+    random 192-bit URL tokens and bounded web-readable permissions.
 
   * Add focused v19 configured-root/runtime acceptance covering certificate
     authentication, a real gateway tunnel data path, restart persistence and
