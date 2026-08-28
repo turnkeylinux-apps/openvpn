@@ -2,6 +2,8 @@
 set -Eeuo pipefail
 umask 077
 
+trap 'status=$?; printf "FAIL: tests/v19.sh line %s: %s (status %s)\\n" "$LINENO" "$BASH_COMMAND" "$status" >&2' ERR
+
 result=${TKL_TEST_RESULT:?TKL_TEST_RESULT is required}
 client_name=tklv19client$$
 namespace=tklvpn$$
