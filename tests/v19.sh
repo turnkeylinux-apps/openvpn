@@ -67,7 +67,9 @@ systemctl --quiet is-active openvpn@server.service \
 systemctl --quiet is-enabled openvpn@server.service \
     openvpn-masquerade.service
 lighttpd -tt -f /etc/lighttpd/lighttpd.conf
-grep -Fq '$SERVER["socket"] == "0.0.0.0:443"' \
+grep -Fq 'server.document-root = "/var/www/openvpn/htdocs/"' \
+    /etc/lighttpd/conf-enabled/50-tklcp.conf
+! grep -Eq 'ssl\.engine|include[[:space:]]+"ssl-params\.conf"|\$SERVER\["socket"\]' \
     /etc/lighttpd/conf-enabled/50-tklcp.conf
 grep -q '\[40openvpn\].*successfully completed' /var/log/inithooks.log
 test -c /dev/net/tun
