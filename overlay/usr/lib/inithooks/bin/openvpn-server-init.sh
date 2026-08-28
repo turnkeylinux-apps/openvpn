@@ -126,10 +126,12 @@ chmod 644 "$EASYRSA_PKI/crl.jail/etc/openvpn/crl.pem"
 
 mv "$SERVER_CCD" "$EASYRSA_PKI/crl.jail/etc/openvpn/"
 ln -s "$EASYRSA_PKI/crl.jail/etc/openvpn/server.ccd" "$SERVER_CCD"
-chown root:nogroup "$EASYRSA_PKI/crl.jail/etc" \
+chown root:nogroup "$EASYRSA_PKI/crl.jail" \
+    "$EASYRSA_PKI/crl.jail/etc" \
     "$EASYRSA_PKI/crl.jail/etc/openvpn" \
     "$EASYRSA_PKI/crl.jail/etc/openvpn/server.ccd"
-chmod 750 "$EASYRSA_PKI/crl.jail/etc" \
+chmod 750 "$EASYRSA_PKI/crl.jail" \
+    "$EASYRSA_PKI/crl.jail/etc" \
     "$EASYRSA_PKI/crl.jail/etc/openvpn" \
     "$EASYRSA_PKI/crl.jail/etc/openvpn/server.ccd"
 

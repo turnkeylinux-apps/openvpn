@@ -128,6 +128,8 @@ source_profile=/etc/openvpn/easy-rsa/keys/$client_name.ovpn
 ccd_file=/etc/openvpn/server.ccd/$client_name
 test "$(stat -c %a "$source_profile")" = 600
 test "$(stat -c %a "/etc/openvpn/easy-rsa/keys/private/$client_name.key")" = 600
+test "$(stat -c %a:%U:%G /etc/openvpn/easy-rsa/keys/crl.jail)" = \
+    750:root:nogroup
 test "$(stat -Lc %a:%U:%G /etc/openvpn/server.ccd)" = 750:root:nogroup
 test "$(stat -c %a:%U:%G "$ccd_file")" = 640:root:nogroup
 grep -Fxq 'iroute 198.51.100.0 255.255.255.0' "$ccd_file"
