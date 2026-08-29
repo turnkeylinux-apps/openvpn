@@ -69,7 +69,8 @@ profile_diagnostics() {
 
     {
         echo "--- profile diagnostics: $phase ---"
-        lighttpd -p -f /etc/lighttpd/lighttpd.conf || true
+        lighttpd -p -f /etc/lighttpd/lighttpd.conf 2>&1 |
+            grep -E 'server\.document-root|server\.errorlog|accesslog\.filename|index-file\.names|\$SERVER\["socket"\]|ssl\.engine' || true
         for path in \
                 /var/www/openvpn/htdocs \
                 /var/www/openvpn/htdocs/profiles \
@@ -102,6 +103,19 @@ profile_diagnostics() {
         echo "--- end profile diagnostics: $phase ---"
     } >&2
 }
+
+# The harness completes firstboot with AUTO_RUN=true.  That inherited headless
+# path intentionally leaves the initialization fence active, so finish the
+# test-only transition to a post-initialization appliance before probing an
+# inbound address.  Otherwise PREROUTING redirects HTTPS to simplehttpd instead
+# of the appliance Lighttpd service.
+if systemctl --quiet is-active turnkey-init-fence.service; then
+    echo "INFO: stopping harness AUTO_RUN initialization fence" >&2
+    iptables-save -t nat |
+        grep -E -- '--dport (80|443).*--to-ports? (60080|60443)' >&2 || true
+    systemctl stop turnkey-init-fence.service
+fi
+! systemctl --quiet is-active turnkey-init-fence.service
 
 systemctl --quiet is-active openvpn@server.service \
     openvpn-masquerade.service lighttpd.service multi-user.target
