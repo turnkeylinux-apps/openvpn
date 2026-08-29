@@ -131,6 +131,8 @@ test -c /dev/net/tun
 test -s /etc/openvpn/server.conf
 test -s /etc/openvpn/easy-rsa/keys/ca.crt
 test -s /etc/openvpn/easy-rsa/keys/private/server.key
+test "$(stat -c %a:%U:%G /var/www/openvpn/htdocs/profiles)" = \
+    750:www-data:www-data
 grep -Fxq 'data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305' \
     /etc/openvpn/server.conf
 grep -Fxq 'topology subnet' /etc/openvpn/server.conf
