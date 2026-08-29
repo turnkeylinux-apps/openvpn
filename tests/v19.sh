@@ -62,6 +62,47 @@ count_nat_rules() {
     '
 }
 
+profile_diagnostics() {
+    local phase=$1
+    local path
+    local url
+
+    {
+        echo "--- profile diagnostics: $phase ---"
+        lighttpd -p -f /etc/lighttpd/lighttpd.conf || true
+        for path in \
+                /var/www/openvpn/htdocs \
+                /var/www/openvpn/htdocs/profiles \
+                "$published_profile" \
+                "$published_profile/index.html" \
+                "$published_profile/$client_name.ovpn"; do
+            echo "--- path: $path ---"
+            namei -l "$path" || true
+            readlink -e "$path" || true
+            stat -Lc 'mode=%a owner=%U group=%G type=%F size=%s path=%n' \
+                "$path" || true
+        done
+        for path in \
+                /var/www/openvpn/logs/access.log \
+                /var/log/lighttpd/error.log; do
+            echo "--- log: $path ---"
+            tail -n 80 "$path" || true
+        done
+        journalctl -u lighttpd.service -b --no-pager -n 80 || true
+        for url in \
+                /profiles/ \
+                "$profile_path" \
+                "${profile_path}index.html" \
+                "${profile_path}${client_name}.ovpn"; do
+            curl --insecure --silent --show-error --noproxy '*' \
+                --header 'Host: localhost' --output /dev/null \
+                --write-out "probe=$url status=%{http_code} effective=%{url_effective}\\n" \
+                "https://127.0.0.1$url" || true
+        done
+        echo "--- end profile diagnostics: $phase ---"
+    } >&2
+}
+
 systemctl --quiet is-active openvpn@server.service \
     openvpn-masquerade.service lighttpd.service multi-user.target
 systemctl --quiet is-enabled openvpn@server.service \
@@ -159,8 +200,10 @@ profile_token=${profile_path%/}
 profile_token=${profile_token##*/}
 test "$(stat -c %a "$published_profile")" = 750
 test "$(stat -c %a "$published_profile/$client_name.ovpn")" = 440
+profile_diagnostics post-creation
 systemctl restart openvpn@server.service
 systemctl --quiet is-active openvpn@server.service
+profile_diagnostics post-openvpn-restart
 
 ip netns add "$namespace"
 ip link add "$host_veth" type veth peer name "$client_veth"
@@ -189,9 +232,15 @@ ip netns exec "$namespace" curl --insecure --fail --location --silent \
     --interface tun0 --max-time 20 \
     "https://$server_tunnel_ip/" >"$response"
 test -s "$response"
-ip netns exec "$namespace" curl --insecure --fail --silent --show-error \
-    --noproxy '*' --header 'Host: localhost' --interface tun0 --max-time 20 \
-    "https://$server_tunnel_ip$profile_path" >"$response"
+if ip netns exec "$namespace" curl --insecure --fail --silent --show-error \
+        --noproxy '*' --header 'Host: localhost' --interface tun0 --max-time 20 \
+        "https://$server_tunnel_ip$profile_path" >"$response"; then
+    profile_diagnostics post-profile-curl
+else
+    status=$?
+    profile_diagnostics post-profile-curl-failure
+    exit "$status"
+fi
 grep -Fq "$client_name.ovpn" "$response"
 ip netns exec "$namespace" curl --insecure --fail --silent --show-error \
     --noproxy '*' --header 'Host: localhost' --interface tun0 --max-time 20 \
