@@ -24,7 +24,7 @@ cleanup() {
     if [[ -s $client_pid ]]; then
         kill "$(cat "$client_pid")" >/dev/null 2>&1
     fi
-    ip netns delete "$namespace" >/dev/null 2>&1
+    ip netns delete "$namespace" >/dev/null 2>&1 || true
     if [[ $client_created == true &&
           -e /etc/openvpn/easy-rsa/keys/$client_name.ovpn ]]; then
         openvpn-removeclient "$client_name" >/dev/null 2>&1
