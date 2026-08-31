@@ -3,9 +3,8 @@
 EASY_RSA=/etc/openvpn/easy-rsa
 HTDOCS=/var/www/openvpn/htdocs
 OPENSSL_CONF=$EASY_RSA/openssl-easyrsa.cnf
-SRC=/usr/local/src
 
-# enable ip forwarding
+# enable ipv4 forwarding
 echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.d/40-openvpn.conf
 
 mkdir -p $EASY_RSA
@@ -17,6 +16,7 @@ sed -i 's|^\(crl=\).*|\1"crl.jail/crl.pem"|' $EASY_RSA/openssl-easyrsa.cnf
 # webserver related
 mkdir -p /var/www/openvpn/logs
 chown www-data:www-data /var/www/openvpn/logs
+install -d -o www-data -g www-data -m 750 "$HTDOCS/profiles"
 ln -s /etc/lighttpd/conf-{available,enabled}/50-tklcp.conf
 
 mkdir -p $HTDOCS/{css,images}
@@ -36,5 +36,5 @@ systemctl enable openvpn@server
 # enable openvpn-tun service (creates /dev/net/tun device in containers - closes #1011)
 systemctl enable openvpn-tun.service
 
-echo 'cipher AES-256-GCM' >> /etc/openvpn/server.conf
-echo 'auth SHA512' >> /etc/openvpn/server.conf
+# enable masquerade firewall rule service for OpenVPN LAN reachback
+systemctl enable openvpn-masquerade.service

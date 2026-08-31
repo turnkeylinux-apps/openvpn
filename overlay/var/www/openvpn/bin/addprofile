@@ -1,4 +1,6 @@
-#!/bin/bash -e
+#!/bin/bash
+set -Eeuo pipefail
+umask 077
 
 fatal() { echo "FATAL: $*" >&2; exit 1; }
 
@@ -16,6 +18,8 @@ if [[ "$#" != "1" ]]; then
 fi
 
 client_name=$1
+[[ ${#client_name} -le 64 && $client_name =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] ||
+    fatal "client-name may contain only letters, numbers, dot, underscore and dash"
 
 export EASYRSA='/etc/openvpn/easy-rsa'
 export EASYRSA_PKI='/etc/openvpn/easy-rsa/keys'
@@ -27,14 +31,16 @@ OVPN_PATH="$EASYRSA_PKI/$client_name.ovpn"
 [ -e "$OVPN_PATH" ] || fatal "$OVPN_PATH does not exist"
 
 SERVER_ADDR="$(grep remote "$OVPN_PATH" | awk '{print $2;exit}')"
-PROFILE_HASH="$(sha1sum "$OVPN_PATH" | cut -d " " -f 1)"
-PROFILE_PATH="$PROFILES/$PROFILE_HASH"
+[[ ${#SERVER_ADDR} -le 253 && $SERVER_ADDR =~ ^[[:alnum:]][[:alnum:].:-]*$ ]] ||
+    fatal "invalid remote address in $OVPN_PATH"
+PROFILE_TOKEN="$(openssl rand -hex 24)"
+PROFILE_PATH="$PROFILES/$PROFILE_TOKEN"
 
-mkdir -p "$PROFILE_PATH"
-cp "$OVPN_PATH" "$PROFILE_PATH/"
-sed "s|CLIENT_NAME|$client_name|" "$TEMPLATE" > "$PROFILE_PATH/index.html"
-chown -R www-data:www-data "$PROFILES"
-chmod 440 "$PROFILE_PATH/$client_name.ovpn"
+install -d -o www-data -g www-data -m 750 "$PROFILE_PATH"
+install -o www-data -g www-data -m 440 \
+    "$OVPN_PATH" "$PROFILE_PATH/$client_name.ovpn"
+sed "s|CLIENT_NAME|$client_name|" "$TEMPLATE" >"$PROFILE_PATH/index.html"
+chown www-data:www-data "$PROFILE_PATH/index.html"
+chmod 440 "$PROFILE_PATH/index.html"
 
-echo "https://$SERVER_ADDR/profiles/$PROFILE_HASH/"
-
+echo "https://$SERVER_ADDR/profiles/$PROFILE_TOKEN/"

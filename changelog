@@ -2,7 +2,34 @@ turnkey-openvpn-19.0 (1) turnkey; urgency=low
 
   * Install OpenVPN from Debian repos - v2.6.14.
 
-  * Fix missing Cipher/Auth in server.conf - closes #2064.
+  * Fix (and updated deprecated) missing Cipher/Auth in server.conf - closes
+    #2064.
+
+  * Update/modernize other default OpenVPN config, including increased key
+    size. A future release will likely move to eliptic curve algorithm; e.g.
+    ecp384r1.
+
+  * Move masquerade firewall config to systemd service rather than Webmin.
+    Allows separation of default/shared TurnKey firewall rules (disabled by
+    default as per all other apps) and OpenVPN specific conf.
+
+  * Include IPv6 notes/docs in build code repo (openvpn/docs/ipv6.md). A
+    future TurnKey release will ship with them pre-enabled/pre-applied.
+
+  * Validate firstboot network/address inputs, fail on initializer/service
+    errors, protect generated client profiles/private keys and reject unsafe
+    client names.
+
+  * Discover the active default-route interface for an idempotent,
+    VPN-subnet-scoped masquerade rule rather than assuming the interface is
+    named eth0.
+
+  * Harden the expiring profile-download helper with validated client names,
+    random 192-bit URL tokens and bounded web-readable permissions.
+
+  * Add focused v19 configured-root/runtime acceptance covering certificate
+    authentication, a real gateway tunnel data path, restart persistence and
+    the signed Debian updater channel.
 
   * Upgraded base distribution to Debian 13.x/Trixie.
 
@@ -396,4 +423,3 @@ turnkey-openvpn-13.0 (1) turnkey; urgency=low
     appliances. Here we only describe changes specific to this appliance.
 
  -- Alon Swartz <alon@turnkeylinux.org>  Wed, 28 Aug 2013 17:58:06 +0300
-

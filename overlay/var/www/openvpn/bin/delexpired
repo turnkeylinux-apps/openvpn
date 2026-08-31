@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/bin/bash
+set -Eeuo pipefail
 # delete downloaded openvpn client profiles
 
 fatal() { echo "FATAL: $*" >&2; exit 1; }
@@ -9,7 +10,7 @@ PROFILES='/var/www/openvpn/htdocs/profiles'
 [[ "$(whoami)" == 'www-data' ]] || fatal 'must be executed as www-data user'
 [[ -e "$LOG" ]] || exit 0
 
-grep 'GET /profiles/[a-z0-9]\{40\}/\(.*\).ovpn HTTP/[12].[0,1]" 200' "$LOG" \
+grep 'GET /profiles/[a-f0-9]\{48\}/[A-Za-z0-9_.-]\{1,64\}.ovpn HTTP/[12].[01]" 200' "$LOG" \
     | awk '{print $7}' \
     | while read -r p; do
     PROFILE_PATH="$PROFILES/$(basename "$(dirname "$p")")"
@@ -17,4 +18,3 @@ grep 'GET /profiles/[a-z0-9]\{40\}/\(.*\).ovpn HTTP/[12].[0,1]" 200' "$LOG" \
     echo "deleting $p"
     rm -rf "$PROFILE_PATH"
 done
-

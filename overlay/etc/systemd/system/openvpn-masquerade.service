@@ -1,0 +1,19 @@
+[Unit]
+Description=OpenVPN LAN masquerade firewall conf for VPN reachback
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/openvpn-masquerade start
+ExecStop=/usr/local/sbin/openvpn-masquerade stop
+RemainAfterExit=yes
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/run
+
+[Install]
+WantedBy=multi-user.target
